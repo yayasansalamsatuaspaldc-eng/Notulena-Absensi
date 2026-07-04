@@ -177,23 +177,28 @@ document.addEventListener('DOMContentLoaded', function() {
   const overlay = document.querySelector('.sidebar-overlay');
   if (overlay) overlay.addEventListener('click', toggleSidebar);
 
-  // INTERCEPTOR NAVIGASI: Mengatasi masalah screen blank hitam/putih pada iframe Google Apps Script
+  // INTERCEPTOR NAVIGASI: Disesuaikan untuk GitHub Pages
   document.querySelectorAll('a[href^="?page="]').forEach(link => {
     link.addEventListener('click', function(e) {
       const target = this.getAttribute('target');
       
-      // Jangan intersep jika link memang diperuntukkan membuka tab baru (misal: formulir mandiri)
+      // Jangan intersep jika link memang diperuntukkan membuka tab baru
       if (target === '_blank') return; 
 
       e.preventDefault();
       showLoading('Mengalihkan halaman...');
       
-      // Ambil parameter tujuan (contoh: "?page=kegiatan")
-      const halamanTujuan = this.getAttribute('href'); 
+      // Ambil nama halaman dari parameter (contoh: dari "?page=kegiatan" menjadi "kegiatan")
+      let halamanTujuan = this.getAttribute('href').replace('?page=', ''); 
       
-      // Arahkan ulang layar utama (Blogger) ke menu yang dipilih
-      const urlBlogger = "https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html";
-      window.top.location.href = urlBlogger + halamanTujuan;
+      // Ubah huruf pertama jadi huruf besar agar cocok dengan nama file (Dashboard.html, Kegiatan.html)
+      if (halamanTujuan !== 'index') {
+        halamanTujuan = halamanTujuan.charAt(0).toUpperCase() + halamanTujuan.slice(1);
+      }
+      
+      // Arahkan langsung ke file HTML lokal yang ada di GitHub
+      window.location.href = halamanTujuan + ".html";
     });
+  });
   });
 });
