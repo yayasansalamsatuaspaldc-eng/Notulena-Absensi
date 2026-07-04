@@ -172,7 +172,7 @@ function confirmAction(msg) {
 document.addEventListener('DOMContentLoaded', function() {
   // Inisialisasi tema tampilan gelap/terang
   initDarkMode();
-  
+
   // Penanganan klik overlay menu sidebar pada perangkat mobile
   const overlay = document.querySelector('.sidebar-overlay');
   if (overlay) overlay.addEventListener('click', toggleSidebar);
@@ -181,24 +181,23 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('a[href^="?page="]').forEach(link => {
     link.addEventListener('click', function(e) {
       const target = this.getAttribute('target');
-      
+
       // Jangan intersep jika link memang diperuntukkan membuka tab baru
-      if (target === '_blank') return; 
+      if (target === '_blank') return;
 
       e.preventDefault();
       showLoading('Mengalihkan halaman...');
-      
+
       // Ambil nama halaman dari parameter (contoh: dari "?page=kegiatan" menjadi "kegiatan")
-      let halamanTujuan = this.getAttribute('href').replace('?page=', ''); 
-      
+      let halamanTujuan = this.getAttribute('href').replace('?page=', '');
+
       // Ubah huruf pertama jadi huruf besar agar cocok dengan nama file (Dashboard.html, Kegiatan.html)
       if (halamanTujuan !== 'index') {
         halamanTujuan = halamanTujuan.charAt(0).toUpperCase() + halamanTujuan.slice(1);
       }
-      
+
       // Arahkan langsung ke file HTML lokal yang ada di GitHub
       window.location.href = halamanTujuan + ".html";
     });
-  });
   });
 });
