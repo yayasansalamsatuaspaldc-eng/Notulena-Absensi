@@ -1,4 +1,3 @@
-<script>
 // === JEMBATAN PENGHUBUNG GITHUB KE GAS ===
 const GAS_URL = "https://script.google.com/macros/s/AKfycbze9ttoUMLMORtcUtA0QJ9dbHRkPTHGHQY3VeNkowv4Y7_T70Psr5WQNUN4Wv7akvV4YA/exec";
 
@@ -198,4 +197,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
-</script>
