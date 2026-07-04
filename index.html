@@ -84,11 +84,11 @@
       <a class="nav-item" href="?page=kegiatan"><i>📅</i> Kegiatan</a>
       <a class="nav-item" href="?page=notulen"><i>📝</i> Notulen</a>
       <a class="nav-item" href="?page=arsip"><i>🗂️</i> Arsip</a>
-      
+
       <div class="nav-section-label">Akses Cepat</div>
       <!-- [SESUDAH] Link absolut ini memastikan browser langsung menuju web app asli Anda -->
       <a class="nav-item" href="https://script.google.com/macros/s/AKfycbwdOLDsKcm0QXJ1dBHnlAOi3fSOKvJ-rL3YOairHzB4OV2jZbvT-LqVGl6_5zWSPxYg1g/exec?page=absensi" target="_blank"><i>✅</i> Form Absensi</a>
-      
+
       <!-- TOMBOL LOGOUT MANUAL -->
       <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
         <i>🚪</i> Keluar (Logout)
@@ -225,65 +225,15 @@ function runSetup() {
 }
 
 document.addEventListener('DOMContentLoaded', loadQR);
-// ============================================================
-// SISTEM LOGOUT OTOMATIS (IDLE TIMER)
-// ============================================================
 
-// Set waktu batas diam (dalam menit).
-// Bisa Anda ubah misal jadi 10 atau 15.
 // ============================================================
 // SISTEM LOGOUT & IDLE TIMER (GLOBAL)
 // ============================================================
-
-const WAKTU_IDLE_MENIT = 5; 
+const WAKTU_IDLE_MENIT = 5;          // Batas diam sebelum logout otomatis (menit)
+const WAKTU_MAKSIMAL_MENIT = 600;    // Batas maksimum sesi login (600 menit / 10 jam)
 let idleTimer;
 
-function resetIdleTimer() {
-  clearTimeout(idleTimer);
-  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
-}
-
-function logoutUtama() {
-  try {
-    if (typeof showLoading === "function") {
-      showLoading('Keluar dari sistem...');
-    }
-    
-    // 1. Sapu bersih seluruh data sesi dan memori browser seketika
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // 2. Siapkan parameter anti-cache
-    const cacheBuster = new Date().getTime();
-    // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
-    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
-    // 4. Lakukan pengalihan paksa
-    window.top.location.replace(logoutUrl);
-      
-  } catch (error) {
-    console.error("Logout error: ", error);
-    // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
-    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
-  }
-
-// [SESUDAH] Sensor aktivitas dipusatkan di sini menggunakan Event Listener yang lebih aman
-window.addEventListener('load', resetIdleTimer);
-document.addEventListener('mousemove', resetIdleTimer);
-document.addEventListener('keypress', resetIdleTimer);
-document.addEventListener('touchstart', resetIdleTimer);
-document.addEventListener('click', resetIdleTimer);
-document.addEventListener('scroll', resetIdleTimer);
-// Set waktu batas diam (dalam menit).
-// Bisa Anda ubah misal jadi 10 atau 15.
-// ============================================================
-// SISTEM LOGOUT & IDLE TIMER (GLOBAL)
-// ============================================================
-
-const WAKTU_IDLE_MENIT = 5;
-const WAKTU_MAKSIMAL_MENIT = 600; // Batas maksimum sesi login (600 menit / 10 jam)
-let idleTimer;
-
-// [TAMBAHAN] Paksa logout otomatis setelah 600 menit tanpa toleransi aktivitas
+// Paksa logout otomatis setelah WAKTU_MAKSIMAL_MENIT tanpa toleransi aktivitas
 setTimeout(logoutUtama, WAKTU_MAKSIMAL_MENIT * 60 * 1000);
 
 function resetIdleTimer() {
@@ -296,24 +246,32 @@ function logoutUtama() {
     if (typeof showLoading === "function") {
       showLoading('Keluar dari sistem...');
     }
-    
+
     // 1. Sapu bersih seluruh data sesi dan memori browser seketika
     localStorage.clear();
     sessionStorage.clear();
-    
+
     // 2. Siapkan parameter anti-cache
     const cacheBuster = new Date().getTime();
     // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
     const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
-    // 4. Lakukan pengalihan paksa
+    // 3. Lakukan pengalihan paksa
     window.top.location.replace(logoutUrl);
-      
+
   } catch (error) {
     console.error("Logout error: ", error);
     // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
     window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
   }
 }
+
+// Sensor aktivitas dipusatkan di sini menggunakan Event Listener
+window.addEventListener('load', resetIdleTimer);
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('keypress', resetIdleTimer);
+document.addEventListener('touchstart', resetIdleTimer);
+document.addEventListener('click', resetIdleTimer);
+document.addEventListener('scroll', resetIdleTimer);
 </script>
 </body>
 </html>
