@@ -1,0 +1,786 @@
+// ============================================================
+// YASSA - Sistem Manajemen Absensi & Notulen Digital
+// Code.gs - Main Backend
+// ============================================================
+
+const SPREADSHEET_ID = '1QeTVi8m6c_dBite-CPIcEK4gw4aO8tjuj8lQq1Z1caE';
+const DRIVE_FOLDER_NAME = 'Arsip Kegiatan YASSA';
+
+// Kredensial Login Admin (Bisa Anda ubah sesuai keinginan)
+const ADMIN_USERNAME = 'yassa';
+const ADMIN_PASSWORD = '1234';
+
+// ============================================================
+// WEB APP ENTRY POINT
+// ============================================================
+
+function doGet(e) {
+  const page = e.parameter.page || 'absensi';
+  
+  if (page === 'absensi') {
+    return HtmlService.createTemplateFromFile('Absensi')
+      .evaluate()
+      .setTitle('Absensi YASSA')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+  
+  if (page === 'dashboard') {
+    return HtmlService.createTemplateFromFile('Dashboard')
+      .evaluate()
+      .setTitle('Dashboard YASSA')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+
+  if (page === 'notulen') {
+    return HtmlService.createTemplateFromFile('Notulen')
+      .evaluate()
+      .setTitle('Notulen YASSA')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+
+  if (page === 'arsip') {
+    return HtmlService.createTemplateFromFile('Arsip')
+      .evaluate()
+      .setTitle('Arsip YASSA')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+
+  if (page === 'kegiatan') {
+    return HtmlService.createTemplateFromFile('Kegiatan')
+      .evaluate()
+      .setTitle('Kegiatan YASSA')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+  }
+
+  return HtmlService.createTemplateFromFile('Index')
+    .evaluate()
+    .setTitle('YASSA - Sistem Digital')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+function verifyAdmin(user, pass) {
+  try {
+    if (String(user) === ADMIN_USERNAME && String(pass) === ADMIN_PASSWORD) {
+      // Pembungkusan getUrl untuk menghindari error environment context
+      let appUrl = '';
+      try { appUrl = ScriptApp.getService().getUrl(); } catch(e) {}
+      
+      return { success: true, url: appUrl ? appUrl + '?page=index' : '' };
+    }
+    return { success: false, message: 'Username atau Password salah!' };
+  } catch (error) {
+    return { success: false, message: 'Gagal memverifikasi: ' + error.message };
+  }
+}
+
+// ============================================================
+// SYSTEM SETUP & INITIALIZATION
+// ============================================================
+
+function setupSystem() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    // Penambahan sheet MASTER_ANGGOTA
+    const sheets = {
+      'MASTER_WILAYAH': ['ID', 'Nama Wilayah'],
+      'MASTER_ANGGOTA': ['ID Anggota', 'Nama Lengkap', 'Wilayah'],
+      'KEGIATAN': ['ID Kegiatan', 'Nama Kegiatan', 'Tanggal', 'Lokasi', 'Status'],
+      'ABSENSI': ['Timestamp', 'Tanggal', 'Jam', 'Nama Peserta', 'Wilayah', 'Kegiatan'],
+      'NOTULEN': ['Tanggal', 'Kegiatan', 'Notulen', 'Dibuat Oleh'],
+      'REKAP': ['Keterangan', 'Nilai']
+    };
+
+    for (const [name, headers] of Object.entries(sheets)) {
+      let sheet = ss.getSheetByName(name);
+      if (!sheet) {
+        sheet = ss.insertSheet(name);
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        sheet.getRange(1, 1, 1, headers.length)
+          .setBackground('#1a73e8')
+          .setFontColor('#ffffff')
+          .setFontWeight('bold');
+      }
+    }
+
+    const wilayahSheet = ss.getSheetByName('MASTER_WILAYAH');
+    if (wilayahSheet.getLastRow() <= 1) {
+      const defaultWilayah = [
+        ['W001', 'Kota Bekasi'], ['W002', 'Kabupaten Bekasi'],
+        ['W003', 'Jakarta Selatan'], ['W004', 'Jakarta Timur'],
+        ['W005', 'Jakarta Pusat'], ['W006', 'Jakarta Barat'],
+        ['W007', 'Jakarta Utara'], ['W008', 'Kota Tangerang'],
+        ['W009', 'Kabupaten Tangerang'], ['W010', 'Tangerang Selatan'],
+        ['W011', 'Kota Depok'], ['W012', 'Kota Bogor'],
+        ['W013', 'Kabupaten Bogor'], ['W014', 'Surabaya'],
+        ['W015', 'Bandung'], ['W016', 'Wilayah Khusus']
+      ];
+      wilayahSheet.getRange(2, 1, defaultWilayah.length, 2).setValues(defaultWilayah);
+    }
+
+    setupDriveFolder();
+    return { success: true, message: 'Sistem berhasil diinisialisasi!' };
+  } catch (error) {
+    Logger.log('Error setupSystem: ' + error.toString());
+    return { success: false, message: 'Gagal inisialisasi: ' + error.message };
+  }
+}
+
+function setupDriveFolder() {
+  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
+  if (!folders.hasNext()) DriveApp.createFolder(DRIVE_FOLDER_NAME);
+}
+
+function getRootFolder() {
+  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(DRIVE_FOLDER_NAME);
+}
+
+// ============================================================
+// DATA GETTERS (WILAYAH & ANGGOTA)
+// ============================================================
+
+function getWilayah() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('MASTER_WILAYAH');
+    if (sheet.getLastRow() <= 1) return [];
+    
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 2).getValues();
+    return data.map(row => ({ 
+      id: String(row[0] || ''), 
+      nama: String(row[1] || '') 
+    })).filter(w => w.id);
+  } catch (error) {
+    Logger.log("Error getWilayah: " + error);
+    return [];
+  }
+}
+
+function getAnggotaByWilayah(wilayahTarget) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('MASTER_ANGGOTA');
+    if (!sheet || sheet.getLastRow() <= 1) return [];
+    
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 3).getValues();
+    const anggota = [];
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][2]) === String(wilayahTarget)) {
+        anggota.push({ id: String(data[i][0] || ''), nama: String(data[i][1] || '') });
+      }
+    }
+    return anggota.sort((a, b) => a.nama.localeCompare(b.nama));
+  } catch (error) {
+    Logger.log("Error getAnggotaByWilayah: " + error);
+    return [];
+  }
+}
+
+// ============================================================
+// KEGIATAN, ABSENSI, & DASHBOARD
+// ============================================================
+
+function getKegiatan() {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('KEGIATAN');
+    if (sheet.getLastRow() <= 1) return [];
+    
+    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 7).getValues();
+return data.map(row => ({
+  id: String(row[0] || ''),
+  nama: String(row[1] || ''),
+  tanggal: (row[2] instanceof Date) ? Utilities.formatDate(row[2], 'Asia/Jakarta', 'yyyy-MM-dd HH:mm') : String(row[2] || ''),
+  lokasi: String(row[3] || ''),
+  status: String(row[4] || ''),
+  latitude: row[5] !== '' ? parseFloat(row[5]) : null,   // Kolom F
+  longitude: row[6] !== '' ? parseFloat(row[6]) : null   // Kolom G
+})).filter(k => k.id).reverse();
+  } catch (error) {
+    Logger.log("Error getKegiatan: " + error);
+    return [];
+  }
+}
+
+function getKegiatanAktif() {
+  const kegiatan = getKegiatan();
+  return kegiatan.find(k => k.status === 'Aktif') || null;
+}
+
+function submitAbsensi(formData) {
+  try {
+    const nama = String(formData.nama || '').trim();
+    const wilayah = String(formData.wilayah || '').trim();
+    
+    if (!nama) return { success: false, message: 'Nama wajib diisi.' };
+    if (!wilayah) return { success: false, message: 'Wilayah wajib dipilih.' };
+
+    const kegiatan = getKegiatanAktif();
+    const namaKegiatan = kegiatan ? String(kegiatan.nama).trim() : 'Absensi Harian (Tanpa Kegiatan)';
+
+    // TAMBAHAN: Mencegah absensi sebelum hari H dan sebelum JAM acara
+    if (kegiatan && kegiatan.tanggal) {
+      // Format waktu hari ini disamakan dengan format jam (Tahun-Bulan-Hari Jam:Menit)
+      const waktuHariIni = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm');
+      
+      if (waktuHariIni < kegiatan.tanggal) {
+        return { success: false, message: 'Gagal: Absensi belum dibuka. Acara baru dimulai pada ' + kegiatan.tanggal };
+      } 
+      
+      // Untuk batas penutupan, kita potong dan cukup cek tanggalnya saja 
+      // agar tidak tertutup otomatis sesaat setelah jam 10:00 lewat.
+      const tglHariIni = waktuHariIni.substring(0, 10);
+      const tglKegiatan = kegiatan.tanggal.substring(0, 10);
+      if (tglHariIni > tglKegiatan) {
+        return { success: false, message: 'Gagal: Absensi sudah ditutup. Acara ini berlangsung pada ' + tglKegiatan };
+      }
+    }
+
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        const sheet = ss.getSheetByName('ABSENSI');
+        // Pindahkan pembuatan waktu (Tanggal) ke atas agar bisa dicek sebagai syarat pencegah duplikat
+        const now = new Date();
+        const timestamp = Utilities.formatDate(now, 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss');
+        const tanggal = Utilities.formatDate(now, 'Asia/Jakarta', 'dd/MM/yyyy');
+        const jam = Utilities.formatDate(now, 'Asia/Jakarta', 'HH:mm:ss');
+        // Pengecekan duplikat diperketat: Cek Tanggal + Nama + Wilayah + Kegiatan
+        if (sheet.getLastRow() > 1) {
+          const existing = sheet.getRange(2, 1, sheet.getLastRow() - 1, 6).getValues();
+          const duplikat = existing.find(row => {
+            // Amankan pembacaan tanggal (mencegah error jika Google Sheets otomatis merubahnya jadi kalender)
+            let tglSheet = row[1];
+            if (tglSheet instanceof Date) {
+              tglSheet = Utilities.formatDate(tglSheet, 'Asia/Jakarta', 'dd/MM/yyyy');
+            } else {
+              tglSheet = String(tglSheet).trim();
+            }
+            
+            return tglSheet === tanggal &&
+                   String(row[3]).toLowerCase().trim() === nama.toLowerCase().trim() &&
+                   String(row[4]).trim() === wilayah.trim() &&
+                   String(row[5]).trim() === namaKegiatan.trim();
+          });
+          if (duplikat) {
+            return { success: false, message: 'Gagal: Nama ' + nama + ' sudah tercatat hadir hari ini!' };
+          }
+        }
+
+        sheet.appendRow([timestamp, tanggal, jam, nama, wilayah, namaKegiatan]);
+        return {
+      success: true,
+      message: 'Absensi berhasil!',
+      data: { nama: nama, wilayah: wilayah, kegiatan: namaKegiatan, jam: jam }
+    };
+  } catch (error) {
+    return { success: false, message: 'Gagal memproses absensi: ' + error.message };
+  }
+}
+
+// ============================================================
+// OCR & AI SUMMARIZATION (INTEGRASI GEMINI VISION)
+// ============================================================
+
+function performOCR(base64Data, mimeType) {
+  try {
+    const cleanBase64 = base64Data.replace(/^data:image\/[a-z]+;base64,/, "");
+    const props = PropertiesService.getScriptProperties();
+    const apiKey = props.getProperty('GEMINI_API_KEY');
+    const rawModel = props.getProperty('YASSA_AI_MODEL') || 'models/gemini-2.5-flash'; 
+    
+    if (!apiKey) {
+      return { success: false, message: 'Sistem Gagal: GEMINI_API_KEY belum disetel di Script Properties.' };
+    }
+
+    const modelPath = rawModel.startsWith('models/') ? rawModel : 'models/' + rawModel;
+    const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${apiKey}`;
+    
+    const promptText = "Tolong baca teks dalam gambar catatan/notulen ini. Perbaiki ejaan yang berantakan, lalu buatkan rangkuman yang rapi dalam bentuk poin-poin terstruktur yang terdiri dari: \n1. Agenda \n2. Keputusan \n3. Tindak Lanjut. \nPastikan outputnya profesional, akurat, dan abaikan coretan/informasi yang tidak relevan.";
+
+    const payload = {
+      "contents": [{
+        "parts": [
+          { "text": promptText },
+          {
+            "inlineData": {
+              "mimeType": mimeType,
+              "data": cleanBase64
+            }
+          }
+        ]
+      }]
+    };
+
+    const options = {
+      "method": "post",
+      "contentType": "application/json",
+      "payload": JSON.stringify(payload),
+      "muteHttpExceptions": true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const json = JSON.parse(response.getContentText());
+
+    if (json.error) {
+      throw new Error(json.error.message);
+    }
+
+    const hasilRangkuman = json.candidates[0].content.parts[0].text;
+    
+    return { 
+      success: true, 
+      text: hasilRangkuman 
+    };
+
+  } catch (error) {
+    Logger.log('Error performOCR: ' + error.toString());
+    return { 
+      success: false, 
+      message: 'AI Gagal memproses gambar: ' + error.message 
+    };
+  }
+}
+
+// ============================================================
+// MANAJEMEN KEGIATAN (CRUD)
+// ============================================================
+
+function addKegiatan(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('KEGIATAN');
+    
+    const idKegiatan = 'KGT-' + new Date().getTime();
+
+    // Ambil nilai latitude & longitude dari form, jika kosong simpan string kosong
+    const lat = (data.latitude !== undefined && data.latitude !== '') ? parseFloat(data.latitude) : '';
+    const lng = (data.longitude !== undefined && data.longitude !== '') ? parseFloat(data.longitude) : '';
+
+    // Urutan kolom: ID | Nama | Tanggal | Lokasi | Status | Latitude | Longitude
+    sheet.appendRow([idKegiatan, data.nama, data.tanggal, data.lokasi, 'Aktif', lat, lng]);
+    
+    return { success: true, message: 'Kegiatan berhasil ditambahkan!' };
+  } catch (error) {
+    return { success: false, message: 'Gagal menambah kegiatan: ' + error.message };
+  }
+}
+
+function updateKegiatan(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('KEGIATAN');
+    const rows = sheet.getDataRange().getValues();
+    
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === data.id) {
+        sheet.getRange(i + 1, 2).setValue(data.nama);
+        sheet.getRange(i + 1, 3).setValue(data.tanggal);
+        sheet.getRange(i + 1, 4).setValue(data.lokasi);
+        // Simpan koordinat ke kolom F (kolom ke-6) dan G (kolom ke-7)
+        const lat = (data.latitude !== undefined && data.latitude !== '') ? parseFloat(data.latitude) : '';
+        const lng = (data.longitude !== undefined && data.longitude !== '') ? parseFloat(data.longitude) : '';
+        sheet.getRange(i + 1, 6).setValue(lat);
+        sheet.getRange(i + 1, 7).setValue(lng);
+        return { success: true, message: 'Kegiatan berhasil diperbarui!' };
+      }
+    }
+    return { success: false, message: 'Kegiatan tidak ditemukan.' };
+  } catch (error) {
+    return { success: false, message: 'Gagal memperbarui kegiatan: ' + error.message };
+  }
+}
+
+function updateKegiatanStatus(id, status) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('KEGIATAN');
+    const rows = sheet.getDataRange().getValues();
+    
+    if (status === 'Aktif') {
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][4] === 'Aktif') {
+          sheet.getRange(i + 1, 5).setValue('Selesai');
+        }
+      }
+    }
+
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === id) {
+        sheet.getRange(i + 1, 5).setValue(status);
+        return { success: true, message: 'Status berhasil diubah!' };
+      }
+    }
+    return { success: false, message: 'Kegiatan tidak ditemukan.' };
+  } catch (error) {
+    return { success: false, message: 'Gagal mengubah status: ' + error.message };
+  }
+}
+
+function deleteKegiatan(id) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('KEGIATAN');
+    const rows = sheet.getDataRange().getValues();
+    
+    for (let i = 1; i < rows.length; i++) {
+      if (String(rows[i][0]) === String(id)) {
+        // [SESUDAH] 1. Catat nama kegiatan sebelum barisnya dihapus (kolom ke-2)
+        const namaKegiatan = String(rows[i][1]).trim();
+
+        // 2. Hapus kegiatan dari sheet KEGIATAN
+        sheet.deleteRow(i + 1); 
+        
+        // 3. Buka sheet ABSENSI dan hapus semua data yang punya nama kegiatan tersebut
+        const absenSheet = ss.getSheetByName('ABSENSI');
+        if (absenSheet && absenSheet.getLastRow() > 1) {
+          const absenRows = absenSheet.getDataRange().getValues();
+          // Kita harus menghapus dari baris paling bawah ke atas agar urutan baris tidak rusak
+          for (let j = absenRows.length - 1; j >= 1; j--) {
+            if (String(absenRows[j][5]).trim() === namaKegiatan) {
+              absenSheet.deleteRow(j + 1);
+            }
+          }
+        }
+
+        return { success: true, message: 'Kegiatan & Absensi berhasil dihapus!' };
+      }
+    }
+    return { success: false, message: 'Kegiatan tidak ditemukan.' };
+  } catch (error) {
+    return { success: false, message: 'Gagal menghapus kegiatan: ' + error.message };
+  }
+}
+// ============================================================
+// MANAJEMEN NOTULEN
+// ============================================================
+
+function saveNotulen(data) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName('NOTULEN');
+    
+    // 1. Buat timestamp tanggal saat ini dalam format teks (String) agar aman di Spreadsheet
+    const now = new Date();
+    const tanggal = Utilities.formatDate(now, 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss');
+    
+    // 2. Pastikan semua data dipaksa menjadi String murni untuk menghindari silent error
+    const kegiatan = String(data.kegiatan || '').trim();
+    const notulen = String(data.notulen || '').trim();
+    const dibuatOleh = String(data.dibuatOleh || '').trim();
+    
+    // 3. Tambahkan baris baru ke sheet NOTULEN sesuai urutan kolom: ['Tanggal', 'Kegiatan', 'Notulen', 'Dibuat Oleh']
+    sheet.appendRow([tanggal, kegiatan, notulen, dibuatOleh]);
+    
+    return { success: true, message: 'Notulen berhasil disimpan!' };
+  } catch (error) {
+    return { success: false, message: 'Gagal menyimpan notulen: ' + error.message };
+  }
+}
+// ============================================================
+// EXPORT PDF (ARSIP & LAPORAN)
+// ============================================================
+
+function generateAbsensiPDF(namaKegiatan) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const dataAbsensi = ss.getSheetByName('ABSENSI').getDataRange().getDisplayValues();
+    
+    let html = `<div style="font-family:sans-serif;">
+      <h2 style="text-align:center;">Daftar Hadir Peserta</h2>
+      <h3 style="text-align:center; color:#555; margin-top:-10px;">${namaKegiatan}</h3><hr><br>
+      <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse; font-size:13px;">
+        <tr style="background-color:#f2f2f2;"><th>No</th><th>Waktu Kehadiran</th><th>Nama Lengkap</th><th>Wilayah</th></tr>`;
+    
+    let no = 1;
+    let adaData = false;
+    for (let i = 1; i < dataAbsensi.length; i++) {
+      if (String(dataAbsensi[i][5]).trim() === String(namaKegiatan).trim() || String(namaKegiatan) === '') {
+        html += `<tr><td align="center">${no++}</td><td>${dataAbsensi[i][0]}</td><td>${dataAbsensi[i][3]}</td><td>${dataAbsensi[i][4]}</td></tr>`;
+        adaData = true;
+      }
+    }
+    html += `</table></div>`;
+    
+    if (!adaData) return { success: false, message: 'Tidak ada data kehadiran untuk kegiatan ini.' };
+
+    const blob = Utilities.newBlob(html, MimeType.HTML).getAs(MimeType.PDF).setName(`Absensi - ${namaKegiatan}.pdf`);
+    const file = getRootFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return { success: true, url: file.getUrl(), message: 'PDF Absensi berhasil dibuat' };
+  } catch (error) {
+    return { success: false, message: 'Gagal membuat PDF: ' + error.message };
+  }
+}
+
+function generateNotulenPDF(namaKegiatan) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const dataNotulen = ss.getSheetByName('NOTULEN').getDataRange().getDisplayValues();
+    let teksNotulen = "<i>Belum ada notulen/catatan yang tersimpan untuk kegiatan ini.</i>";
+    
+    for (let i = 1; i < dataNotulen.length; i++) {
+      if (String(dataNotulen[i][1]).trim() === String(namaKegiatan).trim()) {
+        teksNotulen = String(dataNotulen[i][2]).replace(/\n/g, '<br>');
+        break;
+      }
+    }
+
+    let html = `<div style="font-family:sans-serif;">
+      <h2 style="text-align:center;">Notulen Rapat / Kegiatan</h2>
+      <h3 style="text-align:center; color:#1c5fad; margin-top:-10px;">${namaKegiatan}</h3><hr><br>
+      <div style="background-color:#f9f9f9; padding:20px; border:1px solid #ddd; border-radius:6px; font-size:13px; line-height:1.6;">${teksNotulen}</div>
+    </div>`;
+    
+    const blob = Utilities.newBlob(html, MimeType.HTML).getAs(MimeType.PDF).setName(`Notulen - ${namaKegiatan}.pdf`);
+    const file = getRootFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return { success: true, url: file.getUrl() };
+  } catch (error) {
+    return { success: false, message: 'Gagal membuat PDF Notulen: ' + error.message };
+  }
+}
+
+function generateLaporanLengkap(namaKegiatan) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    const dataNotulen = ss.getSheetByName('NOTULEN').getDataRange().getDisplayValues();
+    let teksNotulen = "<i>Belum ada notulen/catatan yang tersimpan untuk kegiatan ini.</i>";
+    for (let i = 1; i < dataNotulen.length; i++) {
+      if (String(dataNotulen[i][1]).trim() === String(namaKegiatan).trim()) {
+        teksNotulen = String(dataNotulen[i][2]).replace(/\n/g, '<br>');
+        break;
+      }
+    }
+
+    const dataAbsensi = ss.getSheetByName('ABSENSI').getDataRange().getDisplayValues();
+    let tabelAbsensi = `<table border="1" cellpadding="6" cellspacing="0" style="width:100%; border-collapse:collapse; font-size:12px;">
+      <tr style="background-color:#f2f2f2;"><th>No</th><th>Nama Lengkap</th><th>Asal Wilayah</th></tr>`;
+    let no = 1;
+    for (let i = 1; i < dataAbsensi.length; i++) {
+      if (String(dataAbsensi[i][5]).trim() === String(namaKegiatan).trim()) {
+        tabelAbsensi += `<tr><td align="center">${no++}</td><td>${dataAbsensi[i][3]}</td><td>${dataAbsensi[i][4]}</td></tr>`;
+      }
+    }
+    tabelAbsensi += `</table>`;
+
+    let html = `<div style="font-family:sans-serif;">
+      <h2 style="text-align:center;">LAPORAN KEGIATAN YASSA</h2>
+      <h3 style="text-align:center; color:#1c5fad; margin-top:-10px;">${namaKegiatan}</h3><hr style="margin-bottom:20px;">
+      <h3 style="font-size:14px;">A. Hasil / Notulen Rapat</h3>
+      <div style="background-color:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:6px; font-size:13px; line-height:1.6;">${teksNotulen}</div><br>
+      <h3 style="font-size:14px; margin-top:20px;">B. Daftar Hadir Peserta (${no-1} Orang)</h3>
+      ${tabelAbsensi}
+    </div>`;
+
+    const blob = Utilities.newBlob(html, MimeType.HTML).getAs(MimeType.PDF).setName(`Laporan Lengkap - ${namaKegiatan}.pdf`);
+    const file = getRootFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return { success: true, url: file.getUrl() };
+  } catch (error) {
+    return { success: false, message: 'Gagal membuat Laporan PDF: ' + error.message };
+  }
+}
+// ============================================================
+// EXPORT PDF (ARSIP & LAPORAN) DENGAN KOP SURAT
+// ============================================================
+
+// Fungsi Pengambil Kop Surat & Logo Base64 Internal (Anti-Gagal)
+function getKopSurat() {
+  let gopayBase64 = '';
+  try {
+    // Membaca gambar dari Google Drive melalui jalur belakang layar (Internal)
+    const file = DriveApp.getFileById('1rSoLdRVe7BNmOk5iSmtBU5jPS8vZ4wC2');
+    const mime = file.getMimeType();
+    const base64 = Utilities.base64Encode(file.getBlob().getBytes());
+    gopayBase64 = 'data:' + mime + ';base64,' + base64;
+  } catch(e) {
+    // Tetap aman jika gambar gagal dimuat
+    gopayBase64 = '';
+  }
+
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin-bottom: 10px;">
+    <tr>
+      <td width="13%" align="left" valign="middle">
+        <svg width="75" height="75" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="100" cy="100" r="98" fill="black" stroke="white" stroke-width="2"/>
+            <path d="M 65 110 C 65 60, 135 60, 135 110" fill="none" stroke="#4CAF50" stroke-width="12" stroke-linecap="round"/>
+            <circle cx="100" cy="45" r="12" fill="#4CAF50"/>
+            <path d="M 30 120 C 30 80, 80 80, 80 120" fill="none" stroke="#4CAF50" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="55" cy="70" r="10" fill="#4CAF50"/>
+            <path d="M 120 120 C 120 80, 170 80, 170 120" fill="none" stroke="#4CAF50" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="145" cy="70" r="10" fill="#4CAF50"/>
+            <text x="100" y="140" font-family="'Arial Black', Impact, sans-serif" font-size="46" font-weight="900" text-anchor="middle" letter-spacing="1">
+                <tspan fill="white">YA</tspan><tspan fill="#4CAF50">SSA</tspan>
+            </text>
+            <text x="100" y="165" font-family="Arial, sans-serif" font-size="9" fill="white" text-anchor="middle" letter-spacing="1">YAYASAN SALAM SATU ASPAL</text>
+        </svg>
+      </td>
+      <td width="74%" align="center" valign="middle">
+        <div style="font-size: 23px; font-weight: 900; color: #001f3f; letter-spacing: 1.2px; margin-bottom: 4px;">YAYASAN SALAM SATU ASPAL</div>
+        <div style="font-size: 9.5px; line-height: 1.3; margin-bottom: 4px; color: #333;">
+          Akte Notaris Nomor 5 Tgl 02 Agustus 2022 Notaris Jose Dima Satria. SH.M.KN., SK.MENKUMHAM Nomor<br>AHU-0024199.AH.01.12.Tahun 2022 NPWP No.61.030.342.2-416.000
+        </div>
+        <div style="font-size: 11px; font-weight: bold; line-height: 1.4; color: #000;">
+          Jalan H. Mean Raya No. 72 RT 001 RW 002 Kelurahan<br>Karang Timur Kecamatan Karang Tengah Kota Tanggerang Provinsi Banten 15157 081385009062
+        </div>
+      </td>
+      <td width="13%" align="right" valign="middle">
+         ${gopayBase64 ? `<img src="${gopayBase64}" width="75" height="75" style="border-radius:50%; object-fit:cover;">` : ''}
+      </td>
+    </tr>
+  </table>
+  <hr style="border: none; border-top: 3px solid #001f3f; margin: 0 0 2px 0;">
+  <hr style="border: none; border-top: 1px solid #001f3f; margin: 0 0 20px 0;">
+  `;
+}
+
+function generateAbsensiPDF(namaKegiatan) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const dataAbsensi = ss.getSheetByName('ABSENSI').getDataRange().getDisplayValues();
+    
+    let html = `<div style="font-family:sans-serif;">
+      ${getKopSurat()}
+      <h2 style="text-align:center;">Daftar Hadir Peserta</h2>
+      <h3 style="text-align:center; color:#555; margin-top:-10px;">${namaKegiatan}</h3><br>
+      <table border="1" cellpadding="8" cellspacing="0" style="width:100%; border-collapse:collapse; font-size:13px;">
+        <tr style="background-color:#f2f2f2;"><th>No</th><th>Waktu Kehadiran</th><th>Nama Lengkap</th><th>Wilayah</th></tr>`;
+    
+    let no = 1;
+    let adaData = false;
+    for (let i = 1; i < dataAbsensi.length; i++) {
+      if (String(dataAbsensi[i][5]).trim() === String(namaKegiatan).trim() || String(namaKegiatan) === '') {
+        html += `<tr><td align="center">${no++}</td><td>${dataAbsensi[i][0]}</td><td>${dataAbsensi[i][3]}</td><td>${dataAbsensi[i][4]}</td></tr>`;
+        adaData = true;
+      }
+    }
+    html += `</table></div>`;
+    
+    if (!adaData) return { success: false, message: 'Tidak ada data kehadiran untuk kegiatan ini.' };
+
+    const blob = Utilities.newBlob(html, MimeType.HTML).getAs(MimeType.PDF).setName(`Absensi - ${namaKegiatan}.pdf`);
+    const file = getRootFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return { success: true, url: file.getUrl(), message: 'PDF Absensi berhasil dibuat' };
+  } catch (error) {
+    return { success: false, message: 'Gagal membuat PDF: ' + error.message };
+  }
+}
+
+function generateNotulenPDF(namaKegiatan) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const dataNotulen = ss.getSheetByName('NOTULEN').getDataRange().getDisplayValues();
+    let teksNotulen = "<i>Belum ada notulen/catatan yang tersimpan untuk kegiatan ini.</i>";
+    
+    for (let i = 1; i < dataNotulen.length; i++) {
+      if (String(dataNotulen[i][1]).trim() === String(namaKegiatan).trim()) {
+        teksNotulen = String(dataNotulen[i][2]).replace(/\n/g, '<br>');
+        break;
+      }
+    }
+
+    let html = `<div style="font-family:sans-serif;">
+      ${getKopSurat()}
+      <h2 style="text-align:center;">Notulen Rapat / Kegiatan</h2>
+      <h3 style="text-align:center; color:#1c5fad; margin-top:-10px;">${namaKegiatan}</h3><br>
+      <div style="background-color:#f9f9f9; padding:20px; border:1px solid #ddd; border-radius:6px; font-size:13px; line-height:1.6;">${teksNotulen}</div>
+    </div>`;
+    
+    const blob = Utilities.newBlob(html, MimeType.HTML).getAs(MimeType.PDF).setName(`Notulen - ${namaKegiatan}.pdf`);
+    const file = getRootFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return { success: true, url: file.getUrl() };
+  } catch (error) {
+    return { success: false, message: 'Gagal membuat PDF Notulen: ' + error.message };
+  }
+}
+
+function generateLaporanLengkap(namaKegiatan) {
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    
+    const dataNotulen = ss.getSheetByName('NOTULEN').getDataRange().getDisplayValues();
+    let teksNotulen = "<i>Belum ada notulen/catatan yang tersimpan untuk kegiatan ini.</i>";
+    for (let i = 1; i < dataNotulen.length; i++) {
+      if (String(dataNotulen[i][1]).trim() === String(namaKegiatan).trim()) {
+        teksNotulen = String(dataNotulen[i][2]).replace(/\n/g, '<br>');
+        break;
+      }
+    }
+
+    const dataAbsensi = ss.getSheetByName('ABSENSI').getDataRange().getDisplayValues();
+    let tabelAbsensi = `<table border="1" cellpadding="6" cellspacing="0" style="width:100%; border-collapse:collapse; font-size:12px;">
+      <tr style="background-color:#f2f2f2;"><th>No</th><th>Nama Lengkap</th><th>Asal Wilayah</th></tr>`;
+    let no = 1;
+    for (let i = 1; i < dataAbsensi.length; i++) {
+      if (String(dataAbsensi[i][5]).trim() === String(namaKegiatan).trim()) {
+        tabelAbsensi += `<tr><td align="center">${no++}</td><td>${dataAbsensi[i][3]}</td><td>${dataAbsensi[i][4]}</td></tr>`;
+      }
+    }
+    tabelAbsensi += `</table>`;
+
+    let html = `<div style="font-family:sans-serif;">
+      ${getKopSurat()}
+      <h2 style="text-align:center;">LAPORAN KEGIATAN YASSA</h2>
+      <h3 style="text-align:center; color:#1c5fad; margin-top:-10px;">${namaKegiatan}</h3><br>
+      <h3 style="font-size:14px;">A. Hasil / Notulen Rapat</h3>
+      <div style="background-color:#f9f9f9; padding:15px; border:1px solid #ddd; border-radius:6px; font-size:13px; line-height:1.6;">${teksNotulen}</div><br>
+      <h3 style="font-size:14px; margin-top:20px;">B. Daftar Hadir Peserta (${no-1} Orang)</h3>
+      ${tabelAbsensi}
+    </div>`;
+
+    const blob = Utilities.newBlob(html, MimeType.HTML).getAs(MimeType.PDF).setName(`Laporan Lengkap - ${namaKegiatan}.pdf`);
+    const file = getRootFolder().createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return { success: true, url: file.getUrl() };
+  } catch (error) {
+    return { success: false, message: 'Gagal membuat Laporan PDF: ' + error.message };
+  }
+}
+// ============================================================
+// PROXY NOMINATIM - Cari Lokasi via Server (Anti-iframe block)
+// ============================================================
+function cariLokasiProxy(query) {
+  try {
+    const url = 'https://nominatim.openstreetmap.org/search?q=' 
+      + encodeURIComponent(query) 
+      + '&format=json&limit=6&countrycodes=id&addressdetails=1';
+    
+    const response = UrlFetchApp.fetch(url, {
+      headers: { 
+        'Accept-Language': 'id',
+        'User-Agent': 'YASSA-App/1.0'
+      },
+      muteHttpExceptions: true
+    });
+    
+    const data = JSON.parse(response.getContentText());
+    return { success: true, data: data };
+  } catch(e) {
+    return { success: false, message: e.message };
+  }
+}

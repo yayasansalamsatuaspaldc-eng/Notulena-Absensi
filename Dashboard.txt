@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard YASSA</title>
+<?!= include('Style') ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar-overlay"></div>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🕌</div>
+      <div class="sidebar-brand-text">
+        <div class="org">YASSA</div>
+        <div class="sub">Sistem Digital</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-item" href="?page=index"><i>🏠</i> Beranda</a>
+      <a class="nav-item" href="?page=dashboard"><i>📊</i> Dashboard</a>
+      <a class="nav-item" href="?page=kegiatan"><i>📅</i> Kegiatan</a>
+      <a class="nav-item" href="?page=notulen"><i>📝</i> Notulen</a>
+      <a class="nav-item" href="?page=arsip"><i>🗂️</i> Arsip</a>
+      
+      <div class="nav-section-label">Akses Cepat</div>
+      <!-- [SESUDAH] Link absolut ini memastikan browser langsung menuju web app asli Anda -->
+      <a class="nav-item" href="https://script.google.com/macros/s/AKfycbwdOLDsKcm0QXJ1dBHnlAOi3fSOKvJ-rL3YOairHzB4OV2jZbvT-LqVGl6_5zWSPxYg1g/exec?page=absensi" target="_blank"><i>✅</i> Form Absensi</a>
+      
+      <!-- TOMBOL LOGOUT MANUAL -->
+      <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+        <i>🚪</i> Keluar (Logout)
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">👤</div>
+      <div class="sidebar-user-info">
+        <div class="name">Admin YASSA</div>
+        <div class="role">Administrator</div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title">Dashboard</div>
+      <button class="btn btn-sm btn-primary" onclick="loadDashboard()">↻ Refresh</button>
+      <button class="topbar-btn" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+    </div>
+
+    <div class="page-content">
+      <!-- Stat Cards -->
+      <div class="stat-grid mb-6" id="statGrid">
+        <div class="stat-card skeleton-card">Memuat...</div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="row mb-6">
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header">
+              <span>📊</span><div class="card-title">Kehadiran per Kegiatan</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-box"><canvas id="chartKegiatan"></canvas></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header">
+              <span>🗺️</span><div class="card-title">Kehadiran per Wilayah</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-box"><canvas id="chartWilayah"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row mb-6">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <span>📈</span><div class="card-title">Tren Kehadiran Bulanan</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-box"><canvas id="chartBulan"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="row">
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header">
+              <span>✅</span><div class="card-title">Absensi Terbaru</div>
+            </div>
+            <div class="card-body" style="padding:0">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Nama</th><th>Wilayah</th><th>Kegiatan</th><th>Jam</th></tr></thead>
+                  <tbody id="tblAbsensi"><tr><td colspan="4" class="text-center text-muted">Memuat...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header">
+              <span>📅</span><div class="card-title">Kegiatan Terbaru</div>
+            </div>
+            <div class="card-body" style="padding:0">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Nama Kegiatan</th><th>Tanggal</th><th>Status</th></tr></thead>
+                  <tbody id="tblKegiatan"><tr><td colspan="3" class="text-center text-muted">Memuat...</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?!= include('Script') ?>
+<script>
+let charts = {};
+
+function loadDashboard() {
+  showLoading('Memuat data dashboard...');
+  google.script.run
+    .withSuccessHandler(function(data) {
+      hideLoading();
+      renderStats(data);
+      renderCharts(data);
+      renderTables(data);
+    })
+    .withFailureHandler(function(err) {
+      hideLoading();
+      showToast('Gagal memuat data: ' + err.message, 'error');
+    })
+    .getDashboardStats();
+}
+
+function renderStats(d) {
+  const stats = [
+    { icon:'📅', label:'Total Kegiatan',     value: d.totalKegiatan,       color:'#eff6ff', icon_bg:'#3b82f6' },
+    { icon:'👥', label:'Total Peserta',       value: d.totalPeserta,        color:'#f0fdf4', icon_bg:'#10b981' },
+    { icon:'🗺️', label:'Total Wilayah',      value: d.totalWilayah,        color:'#fdf4ff', icon_bg:'#a855f7' },
+    { icon:'✅', label:'Kegiatan Aktif',      value: d.kegiatanAktif,       color:'#fef3c7', icon_bg:'#f59e0b' },
+    { icon:'📊', label:'Kehadiran Bulan Ini', value: d.kehadiranBulanIni,   color:'#fff7ed', icon_bg:'#ef4444' },
+    { icon:'📝', label:'Total Absensi',       value: d.totalAbsensi,        color:'#f0fdfa', icon_bg:'#14b8a6' },
+  ];
+  document.getElementById('statGrid').innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="stat-accent" style="background:${s.icon_bg}"></div>
+      <div class="stat-icon" style="background:${s.color}; font-size:20px">${s.icon}</div>
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value" style="color:${s.icon_bg}">${s.value}</div>
+    </div>
+  `).join('');
+}
+
+function renderCharts(d) {
+  const isDark = document.body.classList.contains('dark-mode');
+  const textColor = isDark ? '#94a3b8' : '#64748b';
+  const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+  const defaults = {
+    plugins: { legend: { labels: { color: textColor } } },
+    scales: {
+      x: { ticks: { color: textColor }, grid: { color: gridColor } },
+      y: { ticks: { color: textColor }, grid: { color: gridColor } }
+    }
+  };
+
+  // Kegiatan chart
+  if (charts.kegiatan) charts.kegiatan.destroy();
+  charts.kegiatan = new Chart(document.getElementById('chartKegiatan'), {
+    type: 'bar',
+    data: {
+      labels: d.chartPerKegiatan.map(x => truncate(x.label, 20)),
+      datasets: [{ label: 'Kehadiran', data: d.chartPerKegiatan.map(x => x.value),
+        backgroundColor: '#3b82f6', borderRadius: 6 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, ...defaults }
+  });
+
+  // Wilayah chart
+  if (charts.wilayah) charts.wilayah.destroy();
+  const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#a855f7','#14b8a6','#f97316'];
+  charts.wilayah = new Chart(document.getElementById('chartWilayah'), {
+    type: 'doughnut',
+    data: {
+      labels: d.chartPerWilayah.map(x => x.label),
+      datasets: [{ data: d.chartPerWilayah.map(x => x.value),
+        backgroundColor: colors, borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'right', labels: { color: textColor, boxWidth:12 } } } }
+  });
+
+  // Bulan chart
+  if (charts.bulan) charts.bulan.destroy();
+  charts.bulan = new Chart(document.getElementById('chartBulan'), {
+    type: 'line',
+    data: {
+      labels: d.chartPerBulan.map(x => x.label),
+      datasets: [{ label: 'Kehadiran', data: d.chartPerBulan.map(x => x.value),
+        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,.15)',
+        fill: true, tension: .4, pointBackgroundColor: '#3b82f6', pointRadius: 5 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, ...defaults }
+  });
+}
+
+function renderTables(d) {
+  // Absensi terbaru
+  const tblA = document.getElementById('tblAbsensi');
+  if (!d.absensiTerbaru || d.absensiTerbaru.length === 0) {
+    tblA.innerHTML = '<tr><td colspan="4" class="text-center text-muted">Belum ada data absensi</td></tr>';
+  } else {
+    tblA.innerHTML = d.absensiTerbaru.map(a => `
+      <tr>
+        <td><strong>${escapeHtml(a.nama)}</strong></td>
+        <td>${escapeHtml(a.wilayah)}</td>
+        <td class="text-muted" style="font-size:12px">${escapeHtml(a.kegiatan)}</td>
+        <td><span class="badge badge-blue">${escapeHtml(a.jam)}</span></td>
+      </tr>
+    `).join('');
+  }
+
+  // Kegiatan terbaru
+  const tblK = document.getElementById('tblKegiatan');
+  if (!d.kegiatanTerbaru || d.kegiatanTerbaru.length === 0) {
+    tblK.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Belum ada kegiatan</td></tr>';
+  } else {
+    tblK.innerHTML = d.kegiatanTerbaru.map(k => `
+      <tr>
+        <td><strong>${escapeHtml(k.nama)}</strong></td>
+        <td class="text-muted" style="font-size:12px">${escapeHtml(k.tanggal)}</td>
+        <td><span class="badge ${k.status==='Aktif'?'badge-green':'badge-gray'}">${k.status==='Aktif'?'🟢':'⚫'} ${k.status}</span></td>
+      </tr>
+    `).join('');
+  }
+}
+
+function truncate(str, n) {
+  return str && str.length > n ? str.slice(0, n) + '…' : str;
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboard);
+
+// ============================================================
+// SISTEM LOGOUT & IDLE TIMER
+// ============================================================
+const WAKTU_IDLE_MENIT = 5; 
+let idleTimer;
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
+}
+
+function logoutUtama() {
+  try {
+    if (typeof showLoading === "function") showLoading('Keluar dari sistem...');
+    localStorage.clear();
+    sessionStorage.clear();
+    const cacheBuster = new Date().getTime();
+    // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
+    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
+    window.top.location.replace(logoutUrl);
+  } catch (error) {
+    // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
+    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
+  }
+}
+
+window.addEventListener('load', resetIdleTimer);
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('keypress', resetIdleTimer);
+document.addEventListener('touchstart', resetIdleTimer);
+document.addEventListener('click', resetIdleTimer);
+document.addEventListener('scroll', resetIdleTimer);
+// Set waktu batas diam (dalam menit).
+// Bisa Anda ubah misal jadi 10 atau 15.
+// ============================================================
+// SISTEM LOGOUT & IDLE TIMER (GLOBAL)
+// ============================================================
+
+const WAKTU_IDLE_MENIT = 5;
+const WAKTU_MAKSIMAL_MENIT = 600; // Batas maksimum sesi login (600 menit / 10 jam)
+let idleTimer;
+
+// [TAMBAHAN] Paksa logout otomatis setelah 600 menit tanpa toleransi aktivitas
+setTimeout(logoutUtama, WAKTU_MAKSIMAL_MENIT * 60 * 1000);
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
+}
+
+function logoutUtama() {
+  try {
+    if (typeof showLoading === "function") {
+      showLoading('Keluar dari sistem...');
+    }
+    
+    // 1. Sapu bersih seluruh data sesi dan memori browser seketika
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // 2. Siapkan parameter anti-cache
+    const cacheBuster = new Date().getTime();
+    // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
+    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
+    // 4. Lakukan pengalihan paksa
+    window.top.location.replace(logoutUrl);
+      
+  } catch (error) {
+    console.error("Logout error: ", error);
+    // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
+    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
+  }
+}
+</script>
+</body>
+</html>
+

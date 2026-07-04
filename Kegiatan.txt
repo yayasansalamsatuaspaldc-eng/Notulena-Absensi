@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kegiatan YASSA</title>
+<?!= include('Style') ?>
+<!-- LEAFLET MAP -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+<style>
+  #mapPickerContainer {
+    display:none; margin-top:12px; border-radius:10px; overflow:hidden;
+    border:1px solid #bfdbfe;
+  }
+  #mapPicker { height:280px; width:100%; }
+  .leaflet-control-geocoder { font-size:13px !important; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar-overlay"></div>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🕌</div>
+      <div class="sidebar-brand-text"><div class="org">YASSA</div><div class="sub">Sistem Digital</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-item" href="?page=index"><i>🏠</i> Beranda</a>
+      <a class="nav-item" href="?page=dashboard"><i>📊</i> Dashboard</a>
+      <a class="nav-item" href="?page=kegiatan"><i>📅</i> Kegiatan</a>
+      <a class="nav-item" href="?page=notulen"><i>📝</i> Notulen</a>
+      <a class="nav-item" href="?page=arsip"><i>🗂️</i> Arsip</a>
+      
+      <div class="nav-section-label">Akses Cepat</div>
+      <a class="nav-item" href="https://script.google.com/macros/s/AKfycbwdOLDsKcm0QXJ1dBHnlAOi3fSOKvJ-rL3YOairHzB4OV2jZbvT-LqVGl6_5zWSPxYg1g/exec?page=absensi" target="_blank"><i>✅</i> Form Absensi</a>
+      
+      <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+        <i>🚪</i> Keluar (Logout)
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">👤</div>
+      <div class="sidebar-user-info"><div class="name">Admin YASSA</div><div class="role">Administrator</div></div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title">Manajemen Kegiatan</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
+      <button class="topbar-btn" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+    </div>
+
+    <div class="page-content">
+      <div id="activeBanner" style="display:none" class="mb-4">
+        <div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px">
+          <span style="font-size:24px">🟢</span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:15px" id="activeTitle">-</div>
+            <div style="font-size:12px;color:#065f46" id="activeMeta">-</div>
+          </div>
+          <span class="badge badge-green">Kegiatan Aktif</span>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-body" style="padding:14px 20px">
+          <div class="d-flex align-center gap-2 flex-wrap">
+            <div class="topbar-search" style="width:240px">
+              <span>🔍</span>
+              <input type="text" id="searchKegiatan" placeholder="Cari kegiatan..." oninput="filterKegiatan()">
+            </div>
+            <select class="form-control" style="width:140px" id="filterStatus" onchange="filterKegiatan()">
+              <option value="">Semua Status</option>
+              <option value="Aktif">Aktif</option>
+              <option value="Selesai">Selesai</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="loadKegiatan()">↻ Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span>📅</span>
+          <div class="card-title">Daftar Kegiatan</div>
+          <div class="card-actions">
+            <span id="countLabel" class="text-muted text-sm"></span>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nama Kegiatan</th>
+                  <th>Tanggal</th>
+                  <th>Lokasi</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tblKegiatan">
+                <tr><td colspan="5" class="text-center text-muted">Memuat data...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalAddKegiatan">
+  <div class="modal">
+    <div class="modal-header">
+      <span>📅</span>
+      <div class="modal-title" id="modalKegiatanTitle">Tambah Kegiatan</div>
+      <button class="modal-close" onclick="closeModal('modalAddKegiatan')">✕</button>
+    </div>
+    <div class="modal-body">
+  <input type="hidden" id="editKegiatanId">
+  <div class="form-group">
+    <label class="form-label">Nama Kegiatan *</label>
+    <input type="text" id="inputNamaKegiatan" class="form-control" placeholder="cth: Rapat Bulanan Muharram 1448 H">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Tanggal *</label>
+    <input type="datetime-local" id="tanggalKegiatan" class="form-control" required>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Lokasi</label>
+    <input type="text" id="inputLokasiKegiatan" class="form-control" placeholder="cth: Masjid Al-Ikhlas, RT 05">
+  </div>
+
+  <div style="background:#eff6ff;
+ border:1px solid #bfdbfe; border-radius:10px; padding:14px; margin-top:4px;">
+    <div style="font-size:12px; font-weight:700; color:#1e40af;
+ margin-bottom:10px;">
+      📍 Koordinat Lokasi (untuk Validasi GPS Absensi)
+    </div>
+    <div style="font-size:11.5px;
+ color:#3b82f6; margin-bottom:10px; line-height:1.5;">
+      Isi koordinat agar peserta hanya bisa absen jika berada di sekitar lokasi kegiatan.<br>
+      Gunakan <strong>Cari Lokasi</strong> di bawah, atau ambil dari HP Anda.<br>
+      <span style="color:#b45309;">💡 <strong>Tips:</strong> Jika nama gedung Inggris tidak ketemu, ketik nama singkat/lokalnya (cth: "Bulungan") atau langsung masukkan angka koordinat dari Google Maps.</span>
+    </div>
+
+    <div style="margin-bottom:12px;
+ position:relative;">
+      <label class="form-label" style="font-size:12px">🔍 Cari Lokasi by Nama</label>
+      <input type="text" id="inputCariLokasi" class="form-control" 
+        placeholder="Ketik nama singkat, cth: Bulungan atau Blok M..." 
+        style="font-size:12px"
+        oninput="cariLokasi(this.value)"
+        autocomplete="off">
+      <div id="hasilCariLokasi" style="
+        position:absolute; z-index:9999;
+        background:#fff; border:1px solid #bfdbfe; border-radius:8px;
+        max-height:180px; overflow-y:auto; display:none;
+        font-size:12px; margin-top:2px; width:100%;
+        box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+      </div>
+    </div>
+
+    <!-- INPUT LAT LNG MANUAL -->
+    <div class="row" style="margin:0">
+      <div class="col-6" style="padding:0 6px 0 0">
+        <label class="form-label" style="font-size:12px">Latitude (cth: -6.2088)</label>
+        <input type="number" step="any" id="inputLatitude" class="form-control" placeholder="-6.2088">
+      </div>
+      <div class="col-6" style="padding:0 0 0 6px">
+        <label class="form-label" style="font-size:12px">Longitude (cth: 106.8456)</label>
+        <input type="number" step="any" id="inputLongitude" class="form-control" placeholder="106.8456">
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+      <button type="button" class="btn btn-outline btn-sm" onclick="ambilKoordinatSekarang()" style="font-size:11px">
+        📍 Ambil dari HP Saya
+      </button>
+      <button type="button" class="btn btn-outline btn-sm" onclick="toggleMapPicker()" style="font-size:11px; background:#eff6ff; border-color:#93c5fd; color:#1d4ed8">
+        🗺️ Pilih dari Peta
+      </button>
+      <span id="statusGPS" style="font-size:11px; color:#64748b;"></span>
+    </div>
+
+    <!-- MAP PICKER -->
+    <div id="mapPickerContainer">
+      <div style="padding:8px 10px; background:#1d4ed8; color:#fff; font-size:12px; font-weight:600">
+        🗺️ Klik titik pada peta untuk memilih koordinat · <span style="font-weight:400">Gunakan kolom pencarian untuk mencari lokasi</span>
+      </div>
+      <div id="mapPicker"></div>
+      <div style="padding:6px 10px; background:#eff6ff; font-size:11px; color:#1e40af">
+        📌 Koordinat terpilih: <span id="mapCoordLabel" style="font-weight:700">—</span>
+        <button type="button" class="btn btn-primary btn-sm" style="float:right; font-size:11px; padding:2px 10px" onclick="konfirmasiKoordinatPeta()">✅ Gunakan Koordinat Ini</button>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalAddKegiatan')">Batal</button>
+      <button class="btn btn-primary" onclick="saveKegiatan()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal" style="max-width: 320px; text-align: center; padding-top: 20px;">
+    <div class="modal-body">
+      <div style="font-size: 45px; margin-bottom: 10px;">⚠️</div>
+      <h3 style="margin-bottom: 8px; font-weight: 800; color: var(--text);" id="confirmTitle">Konfirmasi</h3>
+      <p style="color: var(--text-muted); font-size: 13.5px; line-height: 1.5; margin-bottom: 24px;" id="confirmText">Yakin ingin melanjutkan?</p>
+      <div style="display: flex; gap: 10px;">
+        <button class="btn btn-outline" style="flex: 1; justify-content: center;" onclick="closeModal('modalConfirm')">Batal</button>
+        <button class="btn btn-danger" style="flex: 1; justify-content: center;" id="btnConfirmOk">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?!= include('Script') ?>
+<script>
+let allKegiatan = [];
+let editMode = false;
+
+function loadKegiatan() {
+  showLoading('Memuat kegiatan...');
+  google.script.run
+    .withSuccessHandler(function(data) {
+      hideLoading();
+      allKegiatan = data;
+      renderKegiatan(data);
+      updateActiveBanner(data);
+    })
+    .withFailureHandler(function(err) {
+      hideLoading();
+      showToast('Gagal: ' + err.message, 'error');
+    })
+    .getKegiatan();
+}
+
+function renderKegiatan(data) {
+  document.getElementById('countLabel').textContent = data.length + ' kegiatan';
+  const tbody = document.getElementById('tblKegiatan');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="empty-state"><div class="icon">📅</div><h4>Belum ada kegiatan</h4><p>Tambah kegiatan baru untuk memulai.</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(k => `
+    <tr>
+      <td><strong>${escapeHtml(k.nama)}</strong></td>
+      <td class="text-muted">${escapeHtml(k.tanggal)}</td>
+      <td class="text-muted">${escapeHtml(k.lokasi || '-')}</td>
+      <td><span class="badge ${k.status==='Aktif'?'badge-green':'badge-gray'}">${k.status==='Aktif'?'🟢 Aktif':'⚫ Selesai'}</span></td>
+      <td>
+        <div class="td-actions">
+          ${k.status !== 'Aktif' ? `<button class="btn btn-success btn-sm" onclick="setStatus('${k.id}','Aktif')">▶ Aktifkan</button>` : `<button class="btn btn-warning btn-sm" onclick="setStatus('${k.id}','Selesai')">⏹ Selesaikan</button>`}
+          <button class="btn btn-outline btn-sm" onclick="editKegiatan('${k.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="hapusKegiatan('${k.id}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateActiveBanner(data) {
+  const aktif = data.find(k => k.status === 'Aktif');
+  const banner = document.getElementById('activeBanner');
+  if (aktif) {
+    banner.style.display = 'block';
+    document.getElementById('activeTitle').textContent = aktif.nama;
+    document.getElementById('activeMeta').textContent = `📍 ${aktif.lokasi || '-'} · 📆 ${aktif.tanggal || '-'}`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function filterKegiatan() {
+  const search = document.getElementById('searchKegiatan').value.toLowerCase();
+  const status = document.getElementById('filterStatus').value;
+  let filtered = allKegiatan;
+  if (search) filtered = filtered.filter(k => k.nama.toLowerCase().includes(search) || (k.lokasi||'').toLowerCase().includes(search));
+  if (status) filtered = filtered.filter(k => k.status === status);
+  renderKegiatan(filtered);
+}
+
+function saveKegiatan() {
+  const nama = document.getElementById('inputNamaKegiatan').value.trim();
+  // Ambil nilai tanggal dari HTML dan ubah huruf T menjadi spasi biasa
+  let tanggalRaw = document.getElementById('tanggalKegiatan').value;
+  let tanggal = tanggalRaw.replace('T', ' '); 
+  const lokasi = document.getElementById('inputLokasiKegiatan').value.trim();
+  const id = document.getElementById('editKegiatanId').value;
+  const latitude = document.getElementById('inputLatitude').value.trim();
+  const longitude = document.getElementById('inputLongitude').value.trim();
+
+  if (!nama) { showToast('Nama kegiatan wajib diisi!', 'error'); return; }
+  // Tambahan pelindung: Cegah simpan jika jam belum dipilih
+  if (!tanggalRaw) { showToast('Tanggal dan Jam wajib diisi!', 'error'); return; }
+
+  showLoading('Menyimpan...');
+  if (editMode && id) {
+    google.script.run
+      .withSuccessHandler(done)
+      .withFailureHandler(fail)
+      .updateKegiatan({ id, nama, tanggal, lokasi, latitude, longitude }); 
+  } else {
+    google.script.run
+      .withSuccessHandler(done)
+      .withFailureHandler(fail)
+      .addKegiatan({ nama, tanggal, lokasi, latitude, longitude }); 
+  }
+
+  function done(res) {
+    hideLoading();
+    if (res.success) {
+      closeModal('modalAddKegiatan');
+      showToast(editMode ? 'Kegiatan diperbarui!' : 'Kegiatan ditambahkan!', 'success');
+      loadKegiatan();
+      resetForm();
+    } else {
+      showToast(res.message || 'Gagal menyimpan', 'error');
+    }
+  }
+  function fail(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); }
+}
+
+function editKegiatan(id) {
+  const k = allKegiatan.find(x => x.id === id);
+  if (!k) return;
+  editMode = true;
+  document.getElementById('editKegiatanId').value = id;
+  document.getElementById('inputNamaKegiatan').value = k.nama;
+  // Ubah spasi kembali menjadi huruf T agar formatnya bisa dibaca oleh kotak kalender di layar
+  document.getElementById('tanggalKegiatan').value = k.tanggal.replace(' ', 'T');
+  document.getElementById('inputLokasiKegiatan').value = k.lokasi || '';
+  document.getElementById('inputLatitude').value = k.latitude || '';
+  document.getElementById('inputLongitude').value = k.longitude || '';
+  document.getElementById('modalKegiatanTitle').textContent = 'Edit Kegiatan';
+  openModal('modalAddKegiatan');
+}
+
+function resetForm() {
+  editMode = false;
+  document.getElementById('editKegiatanId').value = '';
+  document.getElementById('inputNamaKegiatan').value = '';
+  document.getElementById('tanggalKegiatan').value = '';
+  document.getElementById('inputLokasiKegiatan').value = '';
+  document.getElementById('inputLatitude').value = '';
+  document.getElementById('inputLongitude').value = '';
+  document.getElementById('statusGPS').textContent = '';
+  document.getElementById('inputCariLokasi').value = '';
+  document.getElementById('hasilCariLokasi').style.display = 'none';
+  document.getElementById('modalKegiatanTitle').textContent = 'Tambah Kegiatan';
+}
+
+// Fungsi GPS yang sudah benar
+function ambilKoordinatSekarang() {
+  const statusEl = document.getElementById('statusGPS');
+
+  statusEl.textContent = '⏳ Mendeteksi lokasi...';
+  statusEl.style.color = '#f59e0b';
+  
+  if (!navigator.geolocation) {
+    statusEl.textContent = '❌ Browser tidak mendukung GPS';
+    statusEl.style.color = '#ef4444';
+    return;
+  }
+
+  // Langsung panggil GPS perangkat tanpa memedulikan iframe
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      document.getElementById('inputLatitude').value = position.coords.latitude.toFixed(6);
+      document.getElementById('inputLongitude').value = position.coords.longitude.toFixed(6);
+      statusEl.textContent = '✅ Koordinat berhasil diambil!';
+      statusEl.style.color = '#10b981';
+    },
+    function(error) {
+      // Jika browser tetap memblokir karena keamanan tingkat tinggi, pesan error asli akan muncul di sini
+      statusEl.textContent = '❌ Gagal: Pastikan izin lokasi aktif atau buka via GAS URL';
+      statusEl.style.color = '#ef4444';
+    },
+    { enableHighAccuracy: true, timeout: 15000 }
+  );
+}
+
+function setStatus(id, status) {
+  if (status === 'Aktif' && !confirm(`Aktifkan kegiatan ini? Kegiatan aktif sebelumnya akan dinonaktifkan.`)) return;
+  showLoading('Mengubah status...');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoading();
+      if (res.success) { showToast('Status diperbarui!', 'success'); loadKegiatan(); }
+    })
+    .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .updateKegiatanStatus(id, status);
+}
+
+function hapusKegiatan(id) {
+  document.getElementById('confirmTitle').textContent = 'Hapus Kegiatan';
+  document.getElementById('confirmText').textContent = 'Yakin ingin menghapus kegiatan ini? Data tidak bisa dikembalikan.';
+  document.getElementById('btnConfirmOk').className = 'btn btn-danger';
+  document.getElementById('btnConfirmOk').onclick = function() {
+    closeModal('modalConfirm');
+    eksekusiHapusKegiatan(id);
+  };
+  openModal('modalConfirm');
+}
+
+function eksekusiHapusKegiatan(id) {
+  showLoading('Menghapus...');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoading();
+      if (res.success) { showToast('Kegiatan dihapus!', 'success'); loadKegiatan(); }
+      else showToast(res.message || 'Gagal menghapus', 'error');
+    })
+    .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .deleteKegiatan(id);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  try { loadKegiatan(); } catch(e) { console.error('loadKegiatan error:', e); }
+});
+
+// Pastikan Leaflet tersedia sebelum dipakai
+window.addEventListener('load', function() {
+  if (typeof L === 'undefined') {
+    console.warn('Leaflet belum ter-load. Tombol peta dinonaktifkan.');
+    const btnPeta = document.querySelector('[onclick="toggleMapPicker()"]');
+    if (btnPeta) btnPeta.disabled = true;
+  }
+});
+
+// ===== LEAFLET MAP PICKER =====
+let mapInstance = null;
+let mapMarker = null;
+let selectedLatLng = null;
+
+function toggleMapPicker() {
+  const container = document.getElementById('mapPickerContainer');
+  const isVisible = container.style.display === 'block';
+  container.style.display = isVisible ? 'none' : 'block';
+  if (!isVisible) initMapPicker();
+}
+
+function initMapPicker() {
+  if (mapInstance) {
+    setTimeout(() => mapInstance.invalidateSize(), 100);
+    return;
+  }
+
+  const defaultLat = parseFloat(document.getElementById('inputLatitude').value) || -2.5;
+  const defaultLng = parseFloat(document.getElementById('inputLongitude').value) || 118.0;
+
+  mapInstance = L.map('mapPicker').setView([defaultLat, defaultLng], defaultLat === -2.5 ? 5 : 15);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(mapInstance);
+
+  L.Control.geocoder({
+    defaultMarkGeocode: false,
+    placeholder: 'Cari lokasi... (cth: Bulungan)',
+    geocoder: L.Control.Geocoder.nominatim()
+  })
+  .on('markgeocode', function(e) {
+    const latlng = e.geocode.center;
+    mapInstance.setView(latlng, 17);
+    setMapMarker(latlng);
+  })
+  .addTo(mapInstance);
+
+  if (document.getElementById('inputLatitude').value) {
+    setMapMarker(L.latLng(defaultLat, defaultLng));
+  }
+
+  mapInstance.on('click', function(e) {
+    setMapMarker(e.latlng);
+  });
+
+  setTimeout(() => mapInstance.invalidateSize(), 200);
+}
+
+function setMapMarker(latlng) {
+  selectedLatLng = latlng;
+  if (mapMarker) mapMarker.setLatLng(latlng);
+  else mapMarker = L.marker(latlng, {draggable: true}).addTo(mapInstance);
+  mapMarker.off('dragend').on('dragend', function() {
+    setMapMarker(mapMarker.getLatLng());
+  });
+  document.getElementById('mapCoordLabel').textContent =
+    latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
+}
+
+function konfirmasiKoordinatPeta() {
+  if (!selectedLatLng) {
+    showToast('Klik dulu titik lokasi di peta!', 'error'); return;
+  }
+  document.getElementById('inputLatitude').value = selectedLatLng.lat.toFixed(6);
+  document.getElementById('inputLongitude').value = selectedLatLng.lng.toFixed(6);
+  document.getElementById('mapPickerContainer').style.display = 'none';
+  document.getElementById('statusGPS').textContent = '✅ Koordinat dari peta berhasil dipilih!';
+  document.getElementById('statusGPS').style.color = '#10b981';
+}
+
+// (dihapus - Leaflet sudah di-load langsung di <head>)
+
+// ============================================================
+// FITUR CARI LOKASI - Nominatim OpenStreetMap (Gratis)
+// ============================================================
+let debounceTimer;
+
+function cariLokasi(query) {
+  clearTimeout(debounceTimer);
+  const hasil = document.getElementById('hasilCariLokasi');
+
+  if (query.length < 3) {
+    hasil.style.display = 'none';
+    hasil.innerHTML = '';
+    return;
+  }
+
+  hasil.innerHTML = '<div style="padding:10px 12px; color:#94a3b8">⏳ Mencari lokasi...</div>';
+  hasil.style.display = 'block';
+
+  debounceTimer = setTimeout(() => {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res.success || !res.data.length) {
+          hasil.innerHTML = '<div style="padding:10px 12px; color:#94a3b8">📭 Lokasi tidak ditemukan, coba kata lain</div>';
+          return;
+        }
+        hasil.innerHTML = res.data.map(d => {
+          const namasingkat = d.display_name.split(',').slice(0, 3).join(',');
+          return `
+            <div onclick="pilihLokasi(${d.lat}, ${d.lon}, \`${d.display_name.replace(/`/g,"'")}\`)"
+              style="padding:10px 12px; cursor:pointer; border-bottom:1px solid #f1f5f9; line-height:1.4"
+              onmouseover="this.style.background='#eff6ff'"
+              onmouseout="this.style.background='#fff'">
+              📍 <strong>${namasingkat}</strong>
+            </div>`;
+        }).join('');
+      })
+      .withFailureHandler(function() {
+        hasil.innerHTML = '<div style="padding:10px 12px; color:#ef4444">❌ Gagal mencari lokasi.</div>';
+      })
+      .cariLokasiProxy(query);
+  }, 600);
+}
+
+function pilihLokasi(lat, lon, namaLengkap) {
+  document.getElementById('inputLatitude').value  = parseFloat(lat).toFixed(6);
+  document.getElementById('inputLongitude').value = parseFloat(lon).toFixed(6);
+
+  // Isi field Lokasi dengan nama singkat (sebelum koma pertama)
+  const namaSingkat = namaLengkap.split(',')[0].trim();
+  const fieldLokasi = document.getElementById('inputLokasiKegiatan');
+  if (!fieldLokasi.value) fieldLokasi.value = namaSingkat;
+
+  // Tutup dropdown & bersihkan input search
+  document.getElementById('hasilCariLokasi').style.display = 'none';
+  document.getElementById('inputCariLokasi').value = '';
+
+  // Update status
+  const statusEl = document.getElementById('statusGPS');
+  statusEl.textContent = '✅ Koordinat diisi dari pencarian: ' + namaSingkat;
+  statusEl.style.color = '#10b981';
+}
+
+// Tutup dropdown jika klik di luar area search
+document.addEventListener('click', function(e) {
+  try {
+    const dropdown = document.getElementById('hasilCariLokasi');
+    const inputCari = document.getElementById('inputCariLokasi');
+    if (dropdown && inputCari && !dropdown.contains(e.target) && e.target !== inputCari) {
+      dropdown.style.display = 'none';
+    }
+  } catch(err) {}
+});
+
+// ============================================================
+// SISTEM LOGOUT & IDLE TIMER (SUDAH DIBERSIHKAN DARI DUPLIKAT)
+// ============================================================
+const WAKTU_IDLE_MENIT = 5;
+const WAKTU_MAKSIMAL_MENIT = 600; 
+let idleTimer;
+
+setTimeout(logoutUtama, WAKTU_MAKSIMAL_MENIT * 60 * 1000);
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
+}
+
+function logoutUtama() {
+  try {
+    if (typeof showLoading === "function") showLoading('Keluar dari sistem...');
+    localStorage.clear();
+    sessionStorage.clear();
+    const cacheBuster = new Date().getTime();
+    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
+    window.top.location.replace(logoutUrl);
+  } catch (error) {
+    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
+  }
+}
+
+window.addEventListener('load', resetIdleTimer);
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('keypress', resetIdleTimer);
+document.addEventListener('touchstart', resetIdleTimer);
+document.addEventListener('click', resetIdleTimer);
+document.addEventListener('scroll', resetIdleTimer);
+</script>
+</body>
+</html>

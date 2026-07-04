@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YASSA - Sistem Digital</title>
+<?!= include('Style') ?>
+<style>
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 32px;
+}
+.portal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+  color: var(--text);
+  display: block;
+}
+.portal-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+.portal-card-icon {
+  width: 60px; height: 60px;
+  border-radius: 14px;
+  display: grid; place-items: center;
+  font-size: 28px;
+  margin: 0 auto 14px;
+}
+.portal-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+.portal-card p { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+.hero { text-align: center; padding: 48px 20px 0; }
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 99px;
+  margin-bottom: 16px;
+  border: 1px solid #bfdbfe;
+}
+.hero h1 { font-size: 34px; font-weight: 800; line-height: 1.2; }
+.hero p { font-size: 15px; color: var(--text-muted); margin-top: 10px; max-width: 480px; margin-left: auto; margin-right: auto; }
+.qr-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  max-width: 360px;
+  margin: 32px auto 0;
+}
+.qr-section h3 { font-weight: 700; margin-bottom: 4px; }
+.qr-section p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+.qr-img { width: 200px; height: 200px; border-radius: 8px; border: 1px solid var(--border); }
+.qr-url { font-size: 11px; color: var(--text-muted); word-break: break-all; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <!-- Sidebar -->
+  <div class="sidebar-overlay"></div>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🕌</div>
+      <div class="sidebar-brand-text">
+        <div class="org">YASSA</div>
+        <div class="sub">Sistem Digital</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-item" href="?page=index"><i>🏠</i> Beranda</a>
+      <a class="nav-item" href="?page=dashboard"><i>📊</i> Dashboard</a>
+      <a class="nav-item" href="?page=kegiatan"><i>📅</i> Kegiatan</a>
+      <a class="nav-item" href="?page=notulen"><i>📝</i> Notulen</a>
+      <a class="nav-item" href="?page=arsip"><i>🗂️</i> Arsip</a>
+      
+      <div class="nav-section-label">Akses Cepat</div>
+      <!-- [SESUDAH] Link absolut ini memastikan browser langsung menuju web app asli Anda -->
+      <a class="nav-item" href="https://script.google.com/macros/s/AKfycbwdOLDsKcm0QXJ1dBHnlAOi3fSOKvJ-rL3YOairHzB4OV2jZbvT-LqVGl6_5zWSPxYg1g/exec?page=absensi" target="_blank"><i>✅</i> Form Absensi</a>
+      
+      <!-- TOMBOL LOGOUT MANUAL -->
+      <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+        <i>🚪</i> Keluar (Logout)
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">👤</div>
+      <div class="sidebar-user-info">
+        <div class="name">Admin YASSA</div>
+        <div class="role">Administrator</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-content">
+    <div class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title">Beranda</div>
+      <button class="topbar-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+    </div>
+
+    <div class="page-content">
+      <div class="hero">
+        <div class="hero-badge">✨ Sistem Manajemen Digital</div>
+        <h1>Selamat Datang di<br>YASSA Digital</h1>
+        <p>Platform manajemen kegiatan, absensi QR Code, notulen, dan arsip digital terintegrasi.</p>
+      </div>
+
+      <div class="portal-grid">
+        <a class="portal-card" href="?page=dashboard">
+          <div class="portal-card-icon" style="background:#eff6ff">📊</div>
+          <h3>Dashboard</h3>
+          <p>Statistik & ringkasan data kegiatan organisasi</p>
+        </a>
+        <a class="portal-card" href="?page=kegiatan">
+          <div class="portal-card-icon" style="background:#f0fdf4">📅</div>
+          <h3>Kegiatan</h3>
+          <p>Kelola jadwal dan status kegiatan YASSA</p>
+        </a>
+        <a class="portal-card" href="?page=absensi" target="_blank">
+          <div class="portal-card-icon" style="background:#fef3c7">✅</div>
+          <h3>Absensi</h3>
+          <p>Form absensi digital via QR Code permanen</p>
+        </a>
+        <a class="portal-card" href="?page=notulen">
+          <div class="portal-card-icon" style="background:#fdf4ff">📝</div>
+          <h3>Notulen</h3>
+          <p>Input & kelola notulen rapat sekretaris</p>
+        </a>
+        <a class="portal-card" href="?page=arsip">
+          <div class="portal-card-icon" style="background:#fff7ed">🗂️</div>
+          <h3>Arsip</h3>
+          <p>Pencarian & ekspor laporan PDF kegiatan</p>
+        </a>
+        <div class="portal-card" onclick="openModal('modalSetup')">
+          <div class="portal-card-icon" style="background:#f1f5f9">⚙️</div>
+          <h3>Setup Sistem</h3>
+          <p>Inisialisasi database & folder Drive pertama kali</p>
+        </div>
+      </div>
+
+      <!-- QR Code Section -->
+      <div class="qr-section">
+        <h3>🔲 QR Code Absensi</h3>
+        <p>QR Code permanen — scan untuk absensi kegiatan aktif</p>
+        <div id="qrContainer">
+          <div style="padding:30px;color:#94a3b8;font-size:13px">Memuat QR Code...</div>
+        </div>
+        <div class="qr-url" id="qrUrl"></div>
+        <button class="btn btn-outline" style="margin-top:12px;font-size:12px" onclick="downloadQR()">⬇ Download QR Code</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Setup -->
+<div class="modal-overlay" id="modalSetup">
+  <div class="modal">
+    <div class="modal-header">
+      <span>⚙️</span>
+      <div class="modal-title">Setup Sistem YASSA</div>
+      <button class="modal-close" onclick="closeModal('modalSetup')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#64748b;font-size:13.5px;line-height:1.6">
+        Setup akan membuat struktur sheet di Google Spreadsheet dan folder di Google Drive secara otomatis.
+        Jalankan sekali saat pertama kali menggunakan sistem.<br><br>
+        <strong>Spreadsheet ID:</strong><br>
+        <code style="font-size:11px;background:#f1f5f9;padding:3px 6px;border-radius:4px">1QeTVi8m6c_dBite-CPIcEK4gw4aO8tjuj8lQq1Z1caE</code>
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modalSetup')">Batal</button>
+      <button class="btn btn-primary" onclick="runSetup()">🚀 Jalankan Setup</button>
+    </div>
+  </div>
+</div>
+
+<?!= include('Script') ?>
+<script>
+function loadQR() {
+  google.script.run
+    .withSuccessHandler(function(data) {
+      const container = document.getElementById('qrContainer');
+      container.innerHTML = `<img class="qr-img" src="${data.qrUrl}" alt="QR Code Absensi" id="qrImage" />`;
+      document.getElementById('qrUrl').textContent = data.absensiUrl;
+    })
+    .getQRCodeUrl();
+}
+
+function downloadQR() {
+  const img = document.getElementById('qrImage');
+  if (!img) return;
+  const a = document.createElement('a');
+  a.href = img.src;
+  a.download = 'QRCode_Absensi_YASSA.png';
+  a.click();
+}
+
+function runSetup() {
+  showLoading('Menginisialisasi sistem...');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoading();
+      closeModal('modalSetup');
+      showToast(res.message || 'Setup selesai!', 'success');
+    })
+    .withFailureHandler(function(err) {
+      hideLoading();
+      showToast('Setup gagal: ' + err.message, 'error');
+    })
+    .setupSystem();
+}
+
+document.addEventListener('DOMContentLoaded', loadQR);
+// ============================================================
+// SISTEM LOGOUT OTOMATIS (IDLE TIMER)
+// ============================================================
+
+// Set waktu batas diam (dalam menit). Bisa Anda ubah misal jadi 10 atau 15.
+// ============================================================
+// SISTEM LOGOUT & IDLE TIMER (GLOBAL)
+// ============================================================
+
+const WAKTU_IDLE_MENIT = 5; 
+let idleTimer;
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
+}
+
+function logoutUtama() {
+  try {
+    if (typeof showLoading === "function") {
+      showLoading('Keluar dari sistem...');
+    }
+    
+    // 1. Sapu bersih seluruh data sesi dan memori browser seketika
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // 2. Siapkan parameter anti-cache
+    const cacheBuster = new Date().getTime();
+    // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
+    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
+    // 4. Lakukan pengalihan paksa
+    window.top.location.replace(logoutUrl);
+      
+  } catch (error) {
+    console.error("Logout error: ", error);
+    // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
+    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
+  }
+
+// [SESUDAH] Sensor aktivitas dipusatkan di sini menggunakan Event Listener yang lebih aman
+window.addEventListener('load', resetIdleTimer);
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('keypress', resetIdleTimer);
+document.addEventListener('touchstart', resetIdleTimer);
+document.addEventListener('click', resetIdleTimer);
+document.addEventListener('scroll', resetIdleTimer);
+// Set waktu batas diam (dalam menit).
+// Bisa Anda ubah misal jadi 10 atau 15.
+// ============================================================
+// SISTEM LOGOUT & IDLE TIMER (GLOBAL)
+// ============================================================
+
+const WAKTU_IDLE_MENIT = 5;
+const WAKTU_MAKSIMAL_MENIT = 600; // Batas maksimum sesi login (600 menit / 10 jam)
+let idleTimer;
+
+// [TAMBAHAN] Paksa logout otomatis setelah 600 menit tanpa toleransi aktivitas
+setTimeout(logoutUtama, WAKTU_MAKSIMAL_MENIT * 60 * 1000);
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
+}
+
+function logoutUtama() {
+  try {
+    if (typeof showLoading === "function") {
+      showLoading('Keluar dari sistem...');
+    }
+    
+    // 1. Sapu bersih seluruh data sesi dan memori browser seketika
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // 2. Siapkan parameter anti-cache
+    const cacheBuster = new Date().getTime();
+    // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
+    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
+    // 4. Lakukan pengalihan paksa
+    window.top.location.replace(logoutUrl);
+      
+  } catch (error) {
+    console.error("Logout error: ", error);
+    // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
+    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
+  }
+}
+</script>
+</body>
+</html>

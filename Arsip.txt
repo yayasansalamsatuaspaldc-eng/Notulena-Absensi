@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arsip YASSA</title>
+<?!= include('Style') ?>
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar-overlay"></div>
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-icon">🕌</div>
+      <div class="sidebar-brand-text"><div class="org">YASSA</div><div class="sub">Sistem Digital</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu Utama</div>
+      <a class="nav-item" href="?page=index"><i>🏠</i> Beranda</a>
+      <a class="nav-item" href="?page=dashboard"><i>📊</i> Dashboard</a>
+      <a class="nav-item" href="?page=kegiatan"><i>📅</i> Kegiatan</a>
+      <a class="nav-item" href="?page=notulen"><i>📝</i> Notulen</a>
+      <a class="nav-item" href="?page=arsip"><i>🗂️</i> Arsip</a>
+      
+      <div class="nav-section-label">Akses Cepat</div>
+      <!-- [SESUDAH] Link absolut ini memastikan browser langsung menuju web app asli Anda -->
+      <a class="nav-item" href="https://script.google.com/macros/s/AKfycbwdOLDsKcm0QXJ1dBHnlAOi3fSOKvJ-rL3YOairHzB4OV2jZbvT-LqVGl6_5zWSPxYg1g/exec?page=absensi" target="_blank"><i>✅</i> Form Absensi</a>
+      
+      <!-- TOMBOL LOGOUT MANUAL -->
+      <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+        <i>🚪</i> Keluar (Logout)
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-avatar">👤</div>
+      <div class="sidebar-user-info"><div class="name">Admin YASSA</div><div class="role">Administrator</div></div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="topbar-title">Arsip & Laporan</div>
+      <button class="topbar-btn" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
+    </div>
+
+    <div class="page-content">
+      <!-- Filter Panel -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <span>🔍</span>
+          <div class="card-title">Filter & Pencarian</div>
+          <div class="card-actions">
+            <button class="btn btn-outline btn-sm" onclick="resetFilter()">✕ Reset</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row" style="margin:0">
+            <div class="col-3" style="padding:4px 8px">
+              <label class="form-label text-sm">Cari Nama / Wilayah</label>
+              <div class="topbar-search" style="width:100%;display:flex">
+                <span>🔍</span>
+                <input type="text" id="searchGlobal" placeholder="Ketik untuk mencari..." oninput="applyFilter()">
+              </div>
+            </div>
+            <div class="col-3" style="padding:4px 8px">
+              <label class="form-label text-sm">Kegiatan</label>
+              <select id="filterKegiatan" class="form-control" onchange="applyFilter()">
+                <option value="">Semua Kegiatan</option>
+              </select>
+            </div>
+            <div class="col-3" style="padding:4px 8px">
+              <label class="form-label text-sm">Wilayah</label>
+              <select id="filterWilayah" class="form-control" onchange="applyFilter()">
+                <option value="">Semua Wilayah</option>
+              </select>
+            </div>
+            <div class="col-3" style="padding:4px 8px">
+              <label class="form-label text-sm">Tanggal</label>
+              <input type="date" id="filterTanggal" class="form-control" onchange="applyFilter()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Panel -->
+      <div class="card mb-4" id="exportPanel" style="display:none">
+        <div class="card-header">
+          <span>📁</span>
+          <div class="card-title" id="exportTitle">Export Laporan</div>
+        </div>
+        <div class="card-body">
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary" onclick="exportAbsensi()">📄 Download Absensi PDF</button>
+            <button class="btn btn-outline" onclick="exportNotulen()">📝 Download Notulen PDF</button>
+            <button class="btn btn-success" onclick="exportLaporan()">📊 Download Laporan Lengkap PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stat-grid mb-4" id="arsipStats" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"></div>
+
+      <!-- Data Table -->
+      <div class="card">
+        <div class="card-header">
+          <span>📋</span>
+          <div class="card-title">Data Absensi</div>
+          <div class="card-actions" id="tableActions">
+            <span id="resultCount" class="text-muted text-sm"></span>
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Peserta</th>
+                  <th>Wilayah</th>
+                  <th>Kegiatan</th>
+                  <th>Tanggal</th>
+                  <th>Jam</th>
+                </tr>
+              </thead>
+              <tbody id="tblArsip">
+                <tr><td colspan="6" class="text-center text-muted" style="padding:40px">Memuat data arsip...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="paginationBar" class="d-flex align-center justify-between" style="padding:12px 16px;border-top:1px solid var(--border)">
+            <span class="text-muted text-sm" id="pageInfo"></span>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline btn-sm" id="btnPrev" onclick="changePage(-1)">← Prev</button>
+              <button class="btn btn-outline btn-sm" id="btnNext" onclick="changePage(1)">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<?!= include('Script') ?>
+<script>
+let allAbsensi = [];
+let filteredData = [];
+let currentPage = 1;
+const PAGE_SIZE = 20;
+let selectedKegiatan = '';
+
+function loadAll() {
+  showLoading('Memuat data arsip...');
+  let done = 0;
+  const checkDone = () => { done++; if (done === 3) { hideLoading(); applyFilter(); } };
+
+  google.script.run
+    .withSuccessHandler(function(data) {
+      allAbsensi = data;
+      checkDone();
+    })
+    .getAbsensi(null);
+
+  google.script.run
+    .withSuccessHandler(function(list) {
+      const sel = document.getElementById('filterKegiatan');
+      list.forEach(k => {
+        const opt = document.createElement('option');
+        opt.value = k.nama;
+        opt.textContent = k.nama;
+        sel.appendChild(opt);
+      });
+      checkDone();
+    })
+    .getKegiatan();
+
+  google.script.run
+    .withSuccessHandler(function(list) {
+      const sel = document.getElementById('filterWilayah');
+      list.forEach(w => {
+        const opt = document.createElement('option');
+        opt.value = w.nama;
+        opt.textContent = w.nama;
+        sel.appendChild(opt);
+      });
+      checkDone();
+    })
+    .getWilayah();
+}
+
+function applyFilter() {
+  const search = document.getElementById('searchGlobal').value.toLowerCase();
+  const kegiatan = document.getElementById('filterKegiatan').value;
+  const wilayah = document.getElementById('filterWilayah').value;
+  const tanggal = document.getElementById('filterTanggal').value;
+
+  selectedKegiatan = kegiatan;
+
+  filteredData = allAbsensi.filter(a => {
+    const matchSearch = !search || a.nama.toLowerCase().includes(search) || a.wilayah.toLowerCase().includes(search) || a.kegiatan.toLowerCase().includes(search);
+    const matchKegiatan = !kegiatan || a.kegiatan === kegiatan;
+    const matchWilayah = !wilayah || a.wilayah === wilayah;
+    const matchTanggal = !tanggal || a.tanggal === formatDateInput(tanggal);
+    return matchSearch && matchKegiatan && matchWilayah && matchTanggal;
+  });
+
+  currentPage = 1;
+  renderTable();
+  renderStats();
+
+  // Show export panel when kegiatan is selected
+  if (kegiatan) {
+    document.getElementById('exportPanel').style.display = 'block';
+    document.getElementById('exportTitle').textContent = 'Export: ' + kegiatan;
+  } else {
+    document.getElementById('exportPanel').style.display = 'none';
+  }
+}
+
+function formatDateInput(val) {
+  // Convert YYYY-MM-DD to DD/MM/YYYY
+  if (!val) return '';
+  const parts = val.split('-');
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+function renderStats() {
+  const wilayahCount = {};
+  filteredData.forEach(a => { wilayahCount[a.wilayah] = (wilayahCount[a.wilayah]||0)+1; });
+  const topWilayah = Object.entries(wilayahCount).sort((a,b)=>b[1]-a[1])[0];
+
+  const uniquePeserta = new Set(filteredData.map(a => a.nama)).size;
+
+  document.getElementById('arsipStats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eff6ff;font-size:18px">📊</div>
+      <div class="stat-label">Total Hadir</div>
+      <div class="stat-value" style="color:#3b82f6">${filteredData.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#f0fdf4;font-size:18px">👥</div>
+      <div class="stat-label">Peserta Unik</div>
+      <div class="stat-value" style="color:#10b981">${uniquePeserta}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#fef3c7;font-size:18px">🏆</div>
+      <div class="stat-label">Wilayah Terbanyak</div>
+      <div class="stat-value" style="font-size:16px;color:#f59e0b">${topWilayah ? topWilayah[0] : '-'}</div>
+    </div>
+  `;
+}
+
+function renderTable() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const pageData = filteredData.slice(start, end);
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+
+  document.getElementById('resultCount').textContent = `${filteredData.length} data ditemukan`;
+  document.getElementById('pageInfo').textContent = `Halaman ${currentPage} dari ${totalPages || 1} · Total ${filteredData.length} data`;
+  document.getElementById('btnPrev').disabled = currentPage === 1;
+  document.getElementById('btnNext').disabled = currentPage >= totalPages;
+
+  const tbody = document.getElementById('tblArsip');
+  if (!pageData.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center"><div class="empty-state"><div class="icon">📂</div><h4>Tidak ada data</h4><p>Coba ubah filter pencarian.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = pageData.map((a, i) => `
+    <tr>
+      <td class="text-muted">${start + i + 1}</td>
+      <td><strong>${escapeHtml(a.nama)}</strong></td>
+      <td><span class="badge badge-blue">${escapeHtml(a.wilayah)}</span></td>
+      <td class="text-muted" style="font-size:12px">${escapeHtml(a.kegiatan)}</td>
+      <td class="text-muted">${escapeHtml(a.tanggal)}</td>
+      <td><span class="badge badge-gray">${escapeHtml(a.jam)}</span></td>
+    </tr>
+  `).join('');
+}
+
+function changePage(dir) {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  currentPage = Math.max(1, Math.min(totalPages, currentPage + dir));
+  renderTable();
+  window.scrollTo(0, 0);
+}
+
+function resetFilter() {
+  document.getElementById('searchGlobal').value = '';
+  document.getElementById('filterKegiatan').value = '';
+  document.getElementById('filterWilayah').value = '';
+  document.getElementById('filterTanggal').value = '';
+  selectedKegiatan = '';
+  applyFilter();
+}
+
+// ============================================================
+// FUNGSI EXPORT PDF (FRONTEND)
+// ============================================================
+
+function exportAbsensi() {
+  try {
+    if (!selectedKegiatan) { showToast('Pilih kegiatan untuk export!', 'error'); return; }
+    showLoading('Membuat PDF Absensi...');
+    
+    google.script.run
+      .withSuccessHandler(function(res) {
+        hideLoading();
+        if (res && res.success) {
+          showToast('PDF siap! Membuka tab baru...', 'success');
+          window.open(res.url, '_blank');
+        } else showToast(res ? res.message : 'Server tidak merespon.', 'error');
+      })
+      .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+      .generateAbsensiPDF(String(selectedKegiatan));
+  } catch (error) { hideLoading(); showToast('Kesalahan sistem: ' + error.message, 'error'); }
+}
+
+function exportNotulen() {
+  try {
+    if (!selectedKegiatan) { showToast('Pilih kegiatan untuk export!', 'error'); return; }
+    showLoading('Membuat PDF Notulen...');
+    
+    google.script.run
+      .withSuccessHandler(function(res) {
+        hideLoading();
+        if (res && res.success) {
+          showToast('PDF Notulen siap!', 'success');
+          window.open(res.url, '_blank');
+        } else showToast(res ? res.message : 'Server tidak merespon.', 'error');
+      })
+      .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+      .generateNotulenPDF(String(selectedKegiatan));
+  } catch (error) { hideLoading(); showToast('Kesalahan sistem: ' + error.message, 'error'); }
+}
+
+function exportLaporan() {
+  try {
+    if (!selectedKegiatan) { showToast('Pilih kegiatan untuk export!', 'error'); return; }
+    showLoading('Membuat Laporan Lengkap PDF...');
+    
+    google.script.run
+      .withSuccessHandler(function(res) {
+        hideLoading();
+        if (res && res.success) {
+          showToast('Laporan Lengkap siap!', 'success');
+          window.open(res.url, '_blank');
+        } else showToast(res ? res.message : 'Server tidak merespon.', 'error');
+      })
+      .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+      .generateLaporanLengkap(String(selectedKegiatan));
+  } catch (error) { hideLoading(); showToast('Kesalahan sistem: ' + error.message, 'error'); }
+}
+
+document.addEventListener('DOMContentLoaded', loadAll);
+// Set waktu batas diam (dalam menit).
+// Bisa Anda ubah misal jadi 10 atau 15.
+// ============================================================
+// SISTEM LOGOUT & IDLE TIMER (GLOBAL)
+// ============================================================
+
+const WAKTU_IDLE_MENIT = 5;
+const WAKTU_MAKSIMAL_MENIT = 600; // Batas maksimum sesi login (600 menit / 10 jam)
+let idleTimer;
+
+// [TAMBAHAN] Paksa logout otomatis setelah 600 menit tanpa toleransi aktivitas
+setTimeout(logoutUtama, WAKTU_MAKSIMAL_MENIT * 60 * 1000);
+
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
+}
+
+function logoutUtama() {
+  try {
+    if (typeof showLoading === "function") {
+      showLoading('Keluar dari sistem...');
+    }
+    
+    // 1. Sapu bersih seluruh data sesi dan memori browser seketika
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // 2. Siapkan parameter anti-cache
+    const cacheBuster = new Date().getTime();
+    // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
+    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
+    // 4. Lakukan pengalihan paksa
+    window.top.location.replace(logoutUrl);
+      
+  } catch (error) {
+    console.error("Logout error: ", error);
+    // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
+    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
+  }
+}
+</script>
+</body>
+</html>
+

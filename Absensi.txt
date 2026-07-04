@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Absensi YASSA</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #2563eb; 
+  --primary-light: #60a5fa; 
+  --primary-dark: #1e3a8a;
+  --accent: #10b981;
+  --danger: #ef4444; 
+  --surface: rgba(255, 255, 255, 0.85); 
+  --text: #1e293b; 
+  --text-muted: #64748b; 
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* Animated 3D Background */
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: linear-gradient(-45deg, #0f172a, #1e3a8a, #3b82f6, #0ea5e9);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  min-height: 100vh; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 20px;
+  overflow-x: hidden;
+}
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Tombol Login Admin - Modern Glass */
+.btn-login-top {
+  position: absolute; top: 20px; right: 20px;
+  background: rgba(255, 255, 255, 0.15); color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3); 
+  border-radius: 99px; padding: 10px 18px; 
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-login-top:hover { 
+  background: rgba(255, 255, 255, 0.95); 
+  color: var(--primary-dark); 
+  transform: translateY(-2px);
+}
+
+.absensi-wrapper { width: 100%; max-width: 440px; z-index: 10; position: relative; perspective: 1000px; }
+
+.absensi-header { text-align: center; margin-bottom: 24px; color: #fff; }
+.absensi-header h1 { font-size: 32px; font-weight: 900; letter-spacing: 1px; text-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+.absensi-header p { font-size: 14px; font-weight: 500; opacity: 0.9; margin-top: 4px; text-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+/* Container 2 Logo 3D */
+.logo-dual-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.logo-box {
+  width: 100px; 
+  height: 100px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 26px;
+  box-shadow:
+    0 15px 30px rgba(0, 0, 0, 0.25),
+    inset 0 4px 6px rgba(255, 255, 255, 1),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.08);
+  display: grid; place-items: center;
+  padding: 4px; /* Padding dikecilkan agar gambar lebih besar */
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.logo-box:hover {
+  transform: translateY(-6px) scale(1.05);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+}
+.logo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+  border-radius: 20px;
+}
+.logo-divider {
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 800;
+  font-size: 22px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Glassmorphism Card */
+.absensi-card { 
+  background: var(--surface); 
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-radius: 28px; 
+  padding: 32px 28px; 
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.8); 
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Banner Kegiatan */
+.kegiatan-banner { 
+  background: linear-gradient(135deg, #ffffff, #eff6ff); 
+  border: 1px solid rgba(255, 255, 255, 0.8); 
+  border-radius: 16px; padding: 16px; margin-bottom: 24px; 
+  display: flex; align-items: center; gap: 14px; 
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.08);
+}
+.kegiatan-banner-icon {
+  width: 42px; height: 42px;
+  background: var(--primary-light);
+  border-radius: 12px; display: grid; place-items: center;
+  font-size: 20px; color: white;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1);
+}
+
+.form-group { margin-bottom: 20px; }
+.form-label { display: block; font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+
+/* 3D Inputs */
+.form-control {
+  width: 100%; padding: 14px 16px; 
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.05); 
+  border-radius: 14px;
+  font-size: 14px; font-family: inherit; font-weight: 600; color: var(--text);
+  outline: none; transition: all 0.3s;
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.04);
+}
+.form-control:focus { 
+  border-color: var(--primary-light); 
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2), inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* Daftar Radio Anggota - Modern Soft UI */
+.radio-list { display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; padding-right: 5px; margin-bottom: 15px;}
+.radio-list::-webkit-scrollbar { width: 6px; }
+.radio-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); border-radius: 10px; }
+.radio-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.radio-item {
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.04); 
+  border-radius: 14px; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.radio-item:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
+.radio-item input[type="radio"] { 
+  appearance: none; width: 22px; height: 22px; 
+  border: 2px solid #cbd5e1; border-radius: 50%; 
+  transition: all 0.2s; position: relative;
+}
+.radio-item input[type="radio"]:checked { border-color: var(--primary); background: var(--primary); }
+.radio-item input[type="radio"]:checked::after {
+  content: ''; position: absolute; top: 5px; left: 5px;
+  width: 8px; height: 8px; background: white; border-radius: 50%;
+}
+.radio-item.selected { 
+  border-color: var(--primary-light); background: #eff6ff; 
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+}
+.lainnya-input { display: none; margin-top: 10px; }
+
+/* Tombol 3D Mechanis */
+.btn-absen {
+  width: 100%; padding: 16px; 
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 0.5px;
+  border: 1px solid #1d4ed8; border-radius: 16px; cursor: pointer;
+  box-shadow: 0 8px 0 #1e3a8a, 0 15px 25px rgba(0,0,0,0.2);
+  transform: translateY(0); transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; justify-content: center; align-items: center; gap: 8px;
+}
+.btn-absen:active:not(:disabled) {
+  box-shadow: 0 0 0 #1e3a8a, 0 5px 10px rgba(0,0,0,0.2);
+  transform: translateY(8px);
+}
+.btn-absen:disabled { opacity: 0.7; cursor: not-allowed; transform: translateY(8px); box-shadow: none; }
+
+/* Modal Login - Glassmorphism */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 999;
+  display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+}
+.modal-login { 
+  background: rgba(255, 255, 255, 0.95); 
+  width: 340px; padding: 32px 28px; 
+  border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.5);
+  transform: scale(0.9); animation: modalIn 0.3s forwards cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes modalIn { to { transform: scale(1); } }
+.modal-login h3 { text-align: center; margin-bottom: 24px; font-weight: 800; color: var(--primary-dark); }
+.modal-btns { display: flex; gap: 12px; margin-top: 24px; }
+.modal-btns button { 
+  flex: 1; padding: 12px; border-radius: 12px; border: none; 
+  font-weight: 700; cursor: pointer; transition: 0.2s; 
+}
+.btn-cancel { background: #f1f5f9; color: #475569; }
+.btn-cancel:hover { background: #e2e8f0; }
+.btn-submit { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+.btn-submit:hover { background: var(--primary-dark); }
+
+/* Success State */
+.success-screen { display: none; text-align: center; padding: 20px 0; }
+.success-circle { 
+  font-size: 60px; margin-bottom: 16px; 
+  animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+@keyframes bounceIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.success-screen h2 { font-weight: 800; color: var(--text); }
+</style>
+</head>
+<body>
+
+<button class="btn-login-top" onclick="openLogin()">
+  <span style="font-size:16px;">🔐</span> Admin
+</button>
+
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-login">
+    <h3>Akses Sistem</h3>
+    <div id="loginError" style="display:none; color: #ef4444; background: #fee2e2; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 16px; border: 1px solid #fca5a5;"></div>
+    
+    <input type="text" id="username" class="form-control" placeholder="Username" style="margin-bottom:12px">
+    <input type="password" id="password" class="form-control" placeholder="Password">
+    
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeLogin()">Batal</button>
+      <button class="btn-submit" id="btnLogin" onclick="doLogin()">Masuk</button>
+    </div>
+  </div>
+</div>
+
+<div class="absensi-wrapper">
+  <div class="absensi-header">
+    <div class="logo-dual-wrapper">
+      <div class="logo-box">
+        <img src="https://drive.google.com/thumbnail?id=1vsWQ2ueBJBiDpyPMZKlW1biEuAN9s6FZ&sz=w1000" alt="Logo YASSA">
+      </div>
+      <div class="logo-divider">✕</div>
+      <div class="logo-box">
+        <img src="https://drive.google.com/thumbnail?id=1SDnF9aIGZ4nKHpYJvxIsNvXiv_OoLoz7&sz=w1000" alt="Logo GoPay">
+      </div>
+    </div>
+    <h1>YASSA</h1>
+    <p>Sistem Kehadiran Digital</p>
+  </div>
+
+  <div class="absensi-card">
+    <div id="formState">
+      <div id="kegiatanBanner" class="kegiatan-banner">
+        <div class="kegiatan-banner-icon">📌</div>
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Status Kegiatan</div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)" id="kegiatanNama">Absensi Harian</div>
+        </div>
+      </div>
+
+      <!-- ===== TAMBAHAN BARU: Banner Status Validasi GPS ===== -->
+      <div id="gpsStatusBanner" style="
+        display:none;
+        border-radius: 14px;
+        padding: 13px 16px;
+        margin-bottom: 18px;
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid transparent;
+      ">
+        <span id="gpsStatusIcon" style="font-size:18px">📡</span>
+        <span id="gpsStatusText">Mendeteksi lokasi Anda...</span>
+      </div>
+      <!-- ===== AKHIR TAMBAHAN ===== -->
+
+      <div class="form-group">
+        <label class="form-label">Pilih Wilayah Anda</label>
+        <select id="selectWilayah" class="form-control" onchange="loadAnggota()">
+          <option value="">-- Sentuh untuk memilih --</option>
+        </select>
+      </div>
+
+      <div id="anggotaArea" style="display:none">
+        <label class="form-label">Identitas Kehadiran</label>
+        <div class="radio-list" id="listAnggota"></div>
+        
+        <div class="radio-item" onclick="selectRadio('radioLAINNYA')">
+          <input type="radio" name="namaAnggota" value="LAINNYA" id="radioLAINNYA">
+          <label for="radioLAINNYA" style="font-weight:700;cursor:pointer;flex:1;font-size:14px">Nama Belum Tercantum (Input Manual)</label>
+        </div>
+        
+        <input type="text" id="inputLainnya" class="form-control lainnya-input" placeholder="Ketik nama lengkap Anda di sini...">
+      </div>
+
+      <div id="pesanErrorAbsensi" style="display:none; color: #ef4444; background: #fee2e2; padding: 12px; border-radius: 10px; font-size: 13.5px; font-weight: 700; text-align: center; margin-top: 20px; border: 1px solid #fca5a5;"></div>
+
+      <button class="btn-absen" id="btnAbsen" onclick="submitAbsensi()" style="margin-top:24px;display:none">
+        <span>🚀</span> KONFIRMASI HADIR
+      </button>
+    </div>
+
+    <div class="success-screen" id="successState">
+      <div class="success-circle">🎉</div>
+      <h2 style="margin-bottom:8px">Berhasil!</h2>
+      <p id="successMsg" style="color:#64748b;font-size:14.5px;font-weight:500;margin-bottom:24px;line-height:1.5">Absensi telah tersimpan.</p>
+      <button class="form-control" style="background:#f8fafc;font-weight:800;color:var(--primary);border:2px solid #e2e8f0;cursor:pointer" onclick="window.top.location.href='https://yayasansalamsatuaspal.blogspot.com/?page=absensi'">Absen Peserta Lain</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// VARIABEL GLOBAL GPS
+// ============================================================
+// Menyimpan data kegiatan aktif, termasuk koordinat pusatnya
+let dataKegiatanAktif = null;
+// Menyimpan hasil GPS user setelah berhasil dideteksi
+let koordinatUserTerverifikasi = null;
+// Radius maksimal dalam meter — ubah angka ini sesuai kebutuhan
+const RADIUS_METER = 300;
+
+// ============================================================
+// INISIALISASI HALAMAN (DOMContentLoaded)
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // 1. Muat daftar wilayah untuk dropdown
+  google.script.run.withSuccessHandler(list => {
+    const sel = document.getElementById('selectWilayah');
+    list.forEach(w => sel.add(new Option(w.nama, w.nama)));
+    
+    // [SESUDAH] Menyuntikkan opsi khusus Relawan di urutan paling bawah
+    sel.add(new Option("Relawan (Input Manual)", "Relawan"));
+  }).getWilayah();
+
+  // 2. Muat data kegiatan aktif (sekarang termasuk koordinat)
+  google.script.run.withSuccessHandler(k => {
+    if (k) {
+      dataKegiatanAktif = k; // Simpan ke variabel global
+      document.getElementById('kegiatanNama').textContent = k.nama;
+      document.querySelector('.kegiatan-banner-icon').textContent = '🟢';
+      document.querySelector('.kegiatan-banner-icon').style.background = 'var(--accent)';
+    }
+    // Mulai proses validasi GPS setelah data kegiatan berhasil dimuat
+    mulaiValidasiGPS();
+  }).getKegiatanAktif();
+});
+
+// ============================================================
+// FUNGSI UTAMA: VALIDASI GPS
+// ============================================================
+function mulaiValidasiGPS() {
+  const banner = document.getElementById('gpsStatusBanner');
+  const icon = document.getElementById('gpsStatusIcon');
+  const text = document.getElementById('gpsStatusText');
+
+  // Jika kegiatan aktif tidak punya koordinat, lewati validasi GPS
+  // (GPS hanya wajib jika admin sudah mengisi koordinat kegiatan)
+  if (!dataKegiatanAktif || !dataKegiatanAktif.latitude || !dataKegiatanAktif.longitude) {
+    tampilBannerGPS('info', '📍', 'Lokasi tidak dikonfigurasi. Absensi terbuka untuk semua lokasi.');
+    koordinatUserTerverifikasi = { lat: 0, lng: 0, dilewati: true };
+    return;
+  }
+
+  // Tampilkan status "sedang mendeteksi"
+  tampilBannerGPS('loading', '📡', 'Mendeteksi lokasi Anda, mohon tunggu...');
+
+  // Periksa apakah GPS tersedia di browser/HP
+  if (!navigator.geolocation) {
+    tampilBannerGPS('error', '❌', 'GPS tidak tersedia di perangkat ini. Absensi tidak dapat dilakukan.');
+    kunciFormAbsensi();
+    return;
+  }
+
+  // Minta izin dan baca koordinat GPS user
+  navigator.geolocation.getCurrentPosition(
+    function(position) {
+      // Berhasil mendapat koordinat
+      const latUser = position.coords.latitude;
+      const lngUser = position.coords.longitude;
+      const latKegiatan = dataKegiatanAktif.latitude;
+      const lngKegiatan = dataKegiatanAktif.longitude;
+
+      // Hitung jarak antara user dan titik pusat kegiatan
+      const jarakMeter = hitungJarak(latUser, lngUser, latKegiatan, lngKegiatan);
+      const jarakTampil = jarakMeter < 1000
+        ? Math.round(jarakMeter) + ' meter'
+        : (jarakMeter / 1000).toFixed(1) + ' km';
+
+      if (jarakMeter <= RADIUS_METER) {
+        // ✅ LOLOS — User berada dalam radius yang diizinkan
+        tampilBannerGPS('success', '✅', `Lokasi valid! Anda berada ${jarakTampil} dari titik kegiatan.`);
+        koordinatUserTerverifikasi = { lat: latUser, lng: lngUser, jarak: jarakMeter };
+      } else {
+        // ❌ DITOLAK — User berada di luar radius
+        tampilBannerGPS('error', '🚫', `Ditolak! Anda berada ${jarakTampil} dari lokasi kegiatan. Batas maksimal ${RADIUS_METER} meter.`);
+        kunciFormAbsensi();
+      }
+    },
+    function(error) {
+      // Gagal mendapat koordinat (user tolak izin, GPS mati, dll)
+      let pesanError = 'Gagal membaca lokasi.';
+      if (error.code === 1) pesanError = 'Izin lokasi ditolak. Aktifkan izin lokasi di browser Anda.';
+      if (error.code === 2) pesanError = 'Sinyal GPS tidak ditemukan. Pastikan GPS aktif.';
+      if (error.code === 3) pesanError = 'Waktu habis saat membaca GPS. Coba lagi.';
+      tampilBannerGPS('error', '❌', pesanError);
+      kunciFormAbsensi();
+    },
+    {
+      enableHighAccuracy: true, // Paksa presisi tinggi (GPS satelit, bukan WiFi)
+      timeout: 15000,           // Tunggu maksimal 15 detik
+      maximumAge: 0             // Jangan pakai cache GPS lama — harus baca ulang
+    }
+  );
+}
+
+// ============================================================
+// FUNGSI PEMBANTU GPS
+// ============================================================
+
+// Menampilkan banner dengan warna & isi sesuai status
+function tampilBannerGPS(tipe, ikon, pesan) {
+  const banner = document.getElementById('gpsStatusBanner');
+  const icon = document.getElementById('gpsStatusIcon');
+  const text = document.getElementById('gpsStatusText');
+
+  banner.style.display = 'flex';
+  icon.textContent = ikon;
+  text.textContent = pesan;
+
+  // Set warna banner sesuai tipe
+  const warna = {
+    loading: { bg: '#f0f9ff', border: '#bae6fd', color: '#0369a1' },
+    success: { bg: '#f0fdf4', border: '#86efac', color: '#15803d' },
+    error:   { bg: '#fef2f2', border: '#fca5a5', color: '#dc2626' },
+    info:    { bg: '#fefce8', border: '#fde047', color: '#854d0e' }
+  };
+  const w = warna[tipe] || warna.info;
+  banner.style.background = w.bg;
+  banner.style.borderColor = w.border;
+  banner.style.color = w.color;
+}
+
+// Mengunci form agar tidak bisa disubmit
+function kunciFormAbsensi() {
+  const btn = document.getElementById('btnAbsen');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<span>🚫</span> LOKASI TIDAK VALID';
+    btn.style.background = 'linear-gradient(180deg, #ef4444, #dc2626)';
+    btn.style.boxShadow = '0 8px 0 #991b1b';
+  }
+  // Nonaktifkan dropdown wilayah juga
+  const sel = document.getElementById('selectWilayah');
+  if (sel) sel.disabled = true;
+}
+
+// Rumus Haversine: menghitung jarak dua koordinat GPS dalam meter
+// Ini rumus matematika standar, tidak perlu diubah
+function hitungJarak(lat1, lng1, lat2, lng2) {
+  const R = 6371000; // Radius bumi dalam meter
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ============================================================
+// FUNGSI FORM ABSENSI (tidak banyak berubah)
+// ============================================================
+
+function loadAnggota() {
+  const wilayah = document.getElementById('selectWilayah').value;
+  const area = document.getElementById('anggotaArea');
+  const list = document.getElementById('listAnggota');
+  const btn = document.getElementById('btnAbsen');
+  
+  if (!wilayah) { area.style.display = 'none'; btn.style.display = 'none'; return; }
+
+  list.innerHTML = '<div style="text-align:center;color:#64748b;padding:20px;font-weight:600">Mencari data... ⏳</div>';
+  area.style.display = 'block';
+
+  // Tombol hanya ditampilkan jika GPS sudah terverifikasi ATAU dilewati
+      if (koordinatUserTerverifikasi) {
+        btn.style.display = 'flex';
+      }
+      document.getElementById('inputLainnya').style.display = 'none';
+
+      // [SESUDAH] Aturan khusus jika pengguna memilih wilayah "Relawan"
+      if (wilayah === 'Relawan') {
+        list.innerHTML = '<div style="font-size:13px;color:#065f46;background:#d1fae5;padding:12px;border-radius:10px;margin-bottom:12px;font-weight:600;text-align:center">👤 Mode Relawan: Silakan ketik nama lengkap Anda pada kolom di bawah.</div>';
+        
+        // Memaksa sistem untuk otomatis mengklik opsi "Nama Belum Tercantum (Input Manual)"
+        selectRadio('radioLAINNYA'); 
+        
+        return; // Hentikan perintah di sini agar sistem tidak mencari daftar nama ke server
+      }
+
+      google.script.run.withSuccessHandler(anggota => {
+        list.innerHTML = '';
+    if (anggota.length === 0) {
+      list.innerHTML = '<div style="font-size:13px;color:#ef4444;background:#fee2e2;padding:12px;border-radius:10px;margin-bottom:12px;font-weight:600;text-align:center">Belum ada data anggota di wilayah ini. Gunakan opsi di bawah.</div>';
+    } else {
+      anggota.forEach((a, i) => {
+        const id = 'radio' + i;
+        list.innerHTML += `
+          <div class="radio-item" onclick="selectRadio('${id}')">
+            <input type="radio" name="namaAnggota" value="${a.nama}" id="${id}">
+            <label for="${id}" style="cursor:pointer;flex:1;font-weight:600;font-size:14px">${a.nama}</label>
+          </div>
+        `;
+      });
+    }
+  }).getAnggotaByWilayah(wilayah);
+}
+
+function selectRadio(id) {
+  document.getElementById(id).checked = true;
+  document.querySelectorAll('.radio-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById(id).parentElement.classList.add('selected');
+  
+  const inputLain = document.getElementById('inputLainnya');
+  if (id === 'radioLAINNYA') {
+    inputLain.style.display = 'block';
+    inputLain.focus();
+  } else {
+    inputLain.style.display = 'none';
+  }
+}
+
+function submitAbsensi() {
+  const wilayah = document.getElementById('selectWilayah').value;
+  const radio = document.querySelector('input[name="namaAnggota"]:checked');
+  const errorDiv = document.getElementById('pesanErrorAbsensi');
+  errorDiv.style.display = 'none';
+
+  // ===== VALIDASI GPS (lapisan pengaman terakhir sebelum kirim data) =====
+  if (!koordinatUserTerverifikasi) {
+    errorDiv.textContent = '🚫 Lokasi belum terverifikasi. Tunggu proses deteksi GPS selesai.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  // Jika GPS gagal dan form terkunci, hentikan di sini
+  if (!koordinatUserTerverifikasi.dilewati && koordinatUserTerverifikasi.jarak > RADIUS_METER) {
+    errorDiv.textContent = '🚫 Anda berada di luar lokasi kegiatan. Absensi tidak diizinkan.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  // ===== AKHIR VALIDASI GPS =====
+
+  if (!radio) {
+    errorDiv.textContent = 'Silakan pilih identitas nama Anda terlebih dahulu!';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  
+  let nama = radio.value;
+  if (nama === 'LAINNYA') {
+    nama = document.getElementById('inputLainnya').value.trim();
+    if (!nama) {
+      errorDiv.textContent = 'Silakan ketik nama lengkap Anda pada kolom yang tersedia!';
+      errorDiv.style.display = 'block';
+      document.getElementById('inputLainnya').focus();
+      return;
+    }
+  }
+
+  const btn = document.getElementById('btnAbsen');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> MENYIMPAN...';
+
+  const payload = { nama: String(nama), wilayah: String(wilayah) };
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res && res.success) {
+        // [SESUDAH] Gunakan window.top agar sinyal menembus langsung ke Blogger
+        window.top.postMessage("ABSEN_SUKSES", "*");
+
+        document.getElementById('formState').style.display = 'none';
+        document.getElementById('successState').style.display = 'block';
+        document.getElementById('successMsg').innerHTML = `Terima kasih <strong>${nama}</strong>,<br>kehadiran Anda untuk wilayah ${wilayah} telah tercatat di sistem.`;
+      } else {
+        errorDiv.textContent = '❌ ' + (res ? res.message : 'Gagal menyimpan');
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀</span> KONFIRMASI HADIR';
+      }
+    })
+    .withFailureHandler(err => {
+      errorDiv.textContent = '❌ Kesalahan Jaringan/Server: ' + err.message;
+      errorDiv.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = '<span>🚀</span> KONFIRMASI HADIR';
+    })
+    .submitAbsensi(payload);
+}
+
+// Fungsi Login Admin (tidak berubah)
+function openLogin() {
+  document.getElementById('loginModal').style.display = 'flex';
+  document.getElementById('loginError').style.display = 'none';
+}
+function closeLogin() {
+  document.getElementById('loginModal').style.display = 'none';
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+}
+function doLogin() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  const btn = document.getElementById('btnLogin');
+  const errorMsg = document.getElementById('loginError');
+  errorMsg.style.display = 'none';
+  btn.textContent = 'Memproses...';
+  btn.disabled = true;
+  google.script.run
+            .withSuccessHandler(res => {
+              if(res && res.success) {
+                // [SESUDAH] Fallback URL jika res.url bermasalah
+                const baseUrl = window.location.href.split('?')[0];
+                // Mengubah '_top' menjadi '_self' agar setelah login sukses tetap berada di dalam Blogger
+                window.open(res.url || (baseUrl + '?page=index'), '_self');
+              } else { 
+                errorMsg.textContent = res ? res.message : 'Akses Ditolak';
+        errorMsg.style.display = 'block';
+        btn.textContent = 'Masuk';
+        btn.disabled = false;
+      }
+    })
+    .withFailureHandler(err => {
+      errorMsg.textContent = 'Error Jaringan: ' + err.message;
+      errorMsg.style.display = 'block';
+      btn.textContent = 'Masuk';
+      btn.disabled = false;
+    })
+    .verifyAdmin(String(u), String(p));
+}
+</script>
+</body>
+</html>
