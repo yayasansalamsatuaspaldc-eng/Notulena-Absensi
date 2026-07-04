@@ -153,12 +153,18 @@ function loadAll() {
   showLoading('Memuat data arsip...');
   let done = 0;
   const checkDone = () => { done++; if (done === 3) { hideLoading(); applyFilter(); } };
+  const onGagal = (label) => function(err) {
+    console.error(label + ' gagal:', err);
+    showToast('Gagal memuat ' + label + ': ' + (err && err.message ? err.message : 'Terjadi kesalahan'), 'error');
+    checkDone(); // tetap lanjut agar loading tidak macet selamanya
+  };
 
   google.script.run
     .withSuccessHandler(function(data) {
       allAbsensi = data;
       checkDone();
     })
+    .withFailureHandler(onGagal('data absensi'))
     .getAbsensi(null);
 
   google.script.run
@@ -172,6 +178,7 @@ function loadAll() {
       });
       checkDone();
     })
+    .withFailureHandler(onGagal('daftar kegiatan'))
     .getKegiatan();
 
   google.script.run
@@ -185,6 +192,7 @@ function loadAll() {
       });
       checkDone();
     })
+    .withFailureHandler(onGagal('daftar wilayah'))
     .getWilayah();
 }
 
@@ -398,4 +406,3 @@ function logoutUtama() {
 </script>
 </body>
 </html>
-
