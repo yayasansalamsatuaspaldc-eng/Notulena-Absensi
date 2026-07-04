@@ -1,4 +1,43 @@
 <script>
+// === JEMBATAN PENGHUBUNG GITHUB KE GAS ===
+const GAS_URL = "https://script.google.com/macros/s/AKfycbze9ttoUMLMORtcUtA0QJ9dbHRkPTHGHQY3VeNkowv4Y7_T70Psr5WQNUN4Wv7akvV4YA/exec";
+
+window.google = {
+  script: {
+    run: new Proxy({}, {
+      get: function(_, prop) {
+        const state = { onSuccess: null, onFailure: null };
+        const handler = {
+          get: function(target, key) {
+            if (key === 'withSuccessHandler') return (cb) => { target.onSuccess = cb; return new Proxy(target, handler); };
+            if (key === 'withFailureHandler') return (cb) => { target.onFailure = cb; return new Proxy(target, handler); };
+            return (...args) => {
+              fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: key, args: args })
+              })
+              .then(res => res.json())
+              .then(data => {
+                if (data.success !== false) {
+                  if (target.onSuccess) target.onSuccess(data._dibungkus ? data.data : data);
+                } else {
+                  if (target.onFailure) target.onFailure(data);
+                }
+              })
+              .catch(err => {
+                if (target.onFailure) target.onFailure(err);
+              });
+            };
+          }
+        };
+        return handler.get(state, prop);
+      }
+    })
+  }
+};
+// =========================================
+
 // ============================================================
 // YASSA - Shared JS Utilities
 // ============================================================
