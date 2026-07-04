@@ -1,0 +1,70 @@
+<style>
+  /* 1. Mematikan scroll bawaan Blogger agar tidak bentrok */
+  body, html {
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* 2. Memaksa kotak aplikasi menutupi seluruh layar secara mutlak */
+  #yassa-app {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999999 !important; /* Angka super besar agar selalu paling atas */
+    background-color: #0f172a; /* Warna dasar saat memuat */
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* 3. Memaksa isi aplikasi (Iframe) merenggang penuh 100% tanpa batas */
+  #yassa-app iframe {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    display: block !important;
+  }
+</style>
+<div id="yassa-app"></div>
+<script>
+  // Siapkan Format Tanggal Hari Ini
+  var dateObj = new Date();
+  var tglHariIni = dateObj.getFullYear() + "-" + dateObj.getMonth() + "-" + dateObj.getDate();
+
+  // Baca status gembok di memori HP
+  var statusGembok = "";
+  try { statusGembok = localStorage.getItem("gembok_yassa"); } catch(e) {}
+
+  // LOGIKA GEMBOK ABSENSI
+  if (statusGembok === tglHariIni) {
+    document.getElementById('yassa-app').innerHTML = `
+      <div style="text-align:center; padding:80px 20px; font-family:sans-serif; height: 100vh; display: flex; flex-direction: column; justify-content: center; background: #ffffff;">
+        <div style="font-size:80px; margin-bottom:15px;">🔒</div>
+        <h2 style="color:#dc2626; margin-bottom:10px;">Akses Terkunci</h2>
+        <p style="color:#64748b; font-weight:bold; line-height:1.6;">Perangkat ini sudah digunakan untuk absen hari ini.<br>Sistem melarang keras manipulasi atau titip absen.</p>
+      </div>
+    `;
+  } else {
+    // Tampilkan Aplikasi Full Screen
+    // [DIUBAH] Langsung ke Absensi.html yang di-hosting di GitHub Pages,
+    // bukan lagi ke script.google.com/.../exec (menghindari layar minta izin Google Drive)
+    var finalUrl = "https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html";
+    document.getElementById('yassa-app').innerHTML = '<iframe src="' + finalUrl + '" allow="geolocation"></iframe>';
+  }
+
+  // PENANGKAP SINYAL SUKSES DARI HALAMAN ABSENSI
+  window.addEventListener("message", function(event) {
+    if (event.data === "ABSEN_SUKSES") {
+      try {
+        localStorage.setItem("gembok_yassa", tglHariIni);
+        document.getElementById('yassa-app').innerHTML = `
+          <div style="text-align:center; padding:80px 20px; font-family:sans-serif; height: 100vh; display: flex; flex-direction: column; justify-content: center; background: #ffffff;">
+            <div style="font-size:80px; margin-bottom:15px;">🔒</div>
+            <h2 style="color:#15803d; margin-bottom:10px;">Berhasil & Terkunci</h2>
+            <p style="color:#64748b; font-weight:bold; line-height:1.6;">Terima kasih, kehadiran Anda telah tercatat.<br><br><span style="color:#dc2626;">Perangkat ini sekarang telah dikunci oleh sistem untuk mencegah absensi ganda hari ini.</span></p>
+          </div>
+        `;
+      } catch(e) {}
+    }
+  });
+</script>
