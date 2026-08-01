@@ -606,9 +606,9 @@ function logoutUtama() {
     sessionStorage.clear();
     const cacheBuster = new Date().getTime();
     const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
-    window.top.location.replace(logoutUrl);
+    window.location.replace(logoutUrl);
   } catch (error) {
-    window.top.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
+    window.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
   }
 }
 
