@@ -173,6 +173,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Inisialisasi tema tampilan gelap/terang
   initDarkMode();
 
+  // ============ MODE EMBED (dipanggil dari YASSA Hub) ============
+  // Kalau dibuka lewat overlay iframe Hub (?embed=1), sembunyikan
+  // sidebar + topbar bawaan halaman ini biar gak dobel sama header Hub.
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    document.body.classList.add('embed-mode');
+  }
+
   // Penanganan klik overlay menu sidebar pada perangkat mobile
   const overlay = document.querySelector('.sidebar-overlay');
   if (overlay) overlay.addEventListener('click', toggleSidebar);
@@ -197,7 +204,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       // Arahkan langsung ke file HTML lokal yang ada di GitHub
-      window.location.href = halamanTujuan + ".html";
+      // (pertahankan ?embed=1 kalau lagi dibuka dari overlay Hub)
+      const isEmbed = new URLSearchParams(window.location.search).get('embed') === '1';
+      window.location.href = halamanTujuan + ".html" + (isEmbed ? "?embed=1" : "");
     });
   });
 });
