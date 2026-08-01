@@ -536,3 +536,15 @@ tbody tr:hover { background: var(--surface2); }
 @media (max-width: 900px) {
   .sidebar-overlay.open { display: block; }
 }
+
+/* ---- MODE EMBED (dibuka dari overlay iframe YASSA Hub) ---- */
+/* Sembunyikan chrome bawaan halaman ini (sidebar & topbar) supaya
+   gak dobel sama header overlay Hub. Konten halaman tetap full lebar. */
+.embed-mode .sidebar,
+.embed-mode .sidebar-overlay,
+.embed-mode .topbar {
+  display: none !important;
+}
+.embed-mode .main-content {
+  margin-left: 0 !important;
+}
