@@ -87,7 +87,7 @@
 
       <div class="nav-section-label">Akses Cepat</div>
       <!-- [SESUDAH] Link absolut ini memastikan browser langsung menuju web app asli Anda -->
-      <a class="nav-item" href="https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" target="_blank"><i>✅</i> Form Absensi</a>
+      <a class="nav-item" href="https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" target="_blank"><i>✅</i> Form Kehadiran</a>
 
       <!-- TOMBOL LOGOUT MANUAL -->
       <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
@@ -115,7 +115,7 @@
       <div class="hero">
         <div class="hero-badge">✨ Sistem Manajemen Digital</div>
         <h1>Selamat Datang di<br>YASSA Digital</h1>
-        <p>Platform manajemen kegiatan, absensi QR Code, notulen, dan arsip digital terintegrasi.</p>
+        <p>Platform manajemen kegiatan, kehadiran QR Code, notulen, dan arsip digital terintegrasi.</p>
       </div>
 
       <div class="portal-grid">
@@ -131,8 +131,8 @@
         </a>
         <a class="portal-card" href="?page=absensi" target="_blank">
           <div class="portal-card-icon" style="background:#fef3c7">✅</div>
-          <h3>Absensi</h3>
-          <p>Form absensi digital via QR Code permanen</p>
+          <h3>Kehadiran</h3>
+          <p>Form kehadiran digital via QR Code permanen</p>
         </a>
         <a class="portal-card" href="?page=notulen">
           <div class="portal-card-icon" style="background:#fdf4ff">📝</div>
@@ -153,8 +153,8 @@
 
       <!-- QR Code Section -->
       <div class="qr-section">
-        <h3>🔲 QR Code Absensi</h3>
-        <p>QR Code permanen — scan untuk absensi kegiatan aktif</p>
+        <h3>🔲 QR Code Kehadiran</h3>
+        <p>QR Code permanen — scan untuk kehadiran kegiatan aktif</p>
         <div id="qrContainer">
           <div style="padding:30px;color:#94a3b8;font-size:13px">Memuat QR Code...</div>
         </div>
@@ -194,7 +194,7 @@ function loadQR() {
   google.script.run
     .withSuccessHandler(function(data) {
       const container = document.getElementById('qrContainer');
-      container.innerHTML = `<img class="qr-img" src="${data.qrUrl}" alt="QR Code Absensi" id="qrImage" />`;
+      container.innerHTML = `<img class="qr-img" src="${data.qrUrl}" alt="QR Code Kehadiran" id="qrImage" />`;
       document.getElementById('qrUrl').textContent = data.absensiUrl;
     })
     .getQRCodeUrl();
@@ -205,7 +205,7 @@ function downloadQR() {
   if (!img) return;
   const a = document.createElement('a');
   a.href = img.src;
-  a.download = 'QRCode_Absensi_YASSA.png';
+  a.download = 'QRCode_Kehadiran_YASSA.png';
   a.click();
 }
 
