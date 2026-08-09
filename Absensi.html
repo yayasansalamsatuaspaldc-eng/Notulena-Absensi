@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Absensi YASSA</title>
+<title>Kehadiran YASSA</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -271,7 +271,7 @@ body {
         <div class="kegiatan-banner-icon">📌</div>
         <div>
           <div style="font-size:11.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Status Kegiatan</div>
-          <div style="font-size:15px;font-weight:800;color:var(--text)" id="kegiatanNama">Absensi Harian</div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)" id="kegiatanNama">Kehadiran Harian</div>
         </div>
       </div>
 
@@ -322,8 +322,8 @@ body {
     <div class="success-screen" id="successState">
       <div class="success-circle">🎉</div>
       <h2 style="margin-bottom:8px">Berhasil!</h2>
-      <p id="successMsg" style="color:#64748b;font-size:14.5px;font-weight:500;margin-bottom:24px;line-height:1.5">Absensi telah tersimpan.</p>
-      <button class="form-control" style="background:#f8fafc;font-weight:800;color:var(--primary);border:2px solid #e2e8f0;cursor:pointer" onclick="window.location.href='https://yayasansalamsatuaspal.blogspot.com/?page=absensi'">Absen Peserta Lain</button>
+      <p id="successMsg" style="color:#64748b;font-size:14.5px;font-weight:500;margin-bottom:24px;line-height:1.5">Kehadiran telah tersimpan.</p>
+      <button class="form-control" style="background:#f8fafc;font-weight:800;color:var(--primary);border:2px solid #e2e8f0;cursor:pointer" onclick="window.location.href='https://yayasansalamsatuaspal.blogspot.com/?page=absensi'">Hadir Peserta Lain</button>
     </div>
   </div>
 </div>
@@ -415,7 +415,7 @@ function mulaiValidasiGPS() {
   // Jika kegiatan aktif tidak punya koordinat, lewati validasi GPS
   // (GPS hanya wajib jika admin sudah mengisi koordinat kegiatan)
   if (!dataKegiatanAktif || !dataKegiatanAktif.latitude || !dataKegiatanAktif.longitude) {
-    tampilBannerGPS('info', '📍', 'Lokasi tidak dikonfigurasi. Absensi terbuka untuk semua lokasi.');
+    tampilBannerGPS('info', '📍', 'Lokasi tidak dikonfigurasi. Kehadiran terbuka untuk semua lokasi.');
     koordinatUserTerverifikasi = { lat: 0, lng: 0, dilewati: true };
     return;
   }
@@ -425,7 +425,7 @@ function mulaiValidasiGPS() {
 
   // Periksa apakah GPS tersedia di browser/HP
   if (!navigator.geolocation) {
-    tampilBannerGPS('error', '❌', 'GPS tidak tersedia di perangkat ini. Absensi tidak dapat dilakukan.');
+    tampilBannerGPS('error', '❌', 'GPS tidak tersedia di perangkat ini. Kehadiran tidak dapat dilakukan.');
     kunciFormAbsensi();
     return;
   }
@@ -602,7 +602,7 @@ function submitAbsensi() {
   }
   // Jika GPS gagal dan form terkunci, hentikan di sini
   if (!koordinatUserTerverifikasi.dilewati && koordinatUserTerverifikasi.jarak > RADIUS_METER) {
-    errorDiv.textContent = '🚫 Anda berada di luar lokasi kegiatan. Absensi tidak diizinkan.';
+    errorDiv.textContent = '🚫 Anda berada di luar lokasi kegiatan. Kehadiran tidak diizinkan.';
     errorDiv.style.display = 'block';
     return;
   }
