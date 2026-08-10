@@ -275,7 +275,7 @@ body {
         <div class="kegiatan-banner-icon">📌</div>
         <div>
           <div style="font-size:11.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Status Kegiatan</div>
-          <div style="font-size:15px;font-weight:800;color:var(--text)" id="kegiatanNama">Kehadiran Harian</div>
+          <div style="font-size:15px;font-weight:800;color:var(--text)" id="kegiatanNama">Memeriksa kegiatan aktif...</div>
         </div>
       </div>
 
@@ -402,9 +402,17 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('kegiatanNama').textContent = k.nama;
       document.querySelector('.kegiatan-banner-icon').textContent = '🟢';
       document.querySelector('.kegiatan-banner-icon').style.background = 'var(--accent)';
+      // Kegiatan aktif ada -> lanjut proses validasi GPS seperti biasa.
+      mulaiValidasiGPS();
+    } else {
+      // TIDAK ADA kegiatan aktif sama sekali -- form absensi HARUS ditutup
+      // total, jangan biarkan orang tetap bisa absen tanpa kegiatan &
+      // tanpa proteksi lokasi.
+      document.getElementById('kegiatanNama').textContent = 'Tidak ada kegiatan aktif';
+      document.querySelector('.kegiatan-banner-icon').textContent = '🔴';
+      document.querySelector('.kegiatan-banner-icon').style.background = 'var(--danger)';
+      kunciFormTanpaKegiatan();
     }
-    // Mulai proses validasi GPS setelah data kegiatan berhasil dimuat
-    mulaiValidasiGPS();
   }).getKegiatanAktif();
 });
 
@@ -416,10 +424,12 @@ function mulaiValidasiGPS() {
   const icon = document.getElementById('gpsStatusIcon');
   const text = document.getElementById('gpsStatusText');
 
-  // Jika kegiatan aktif tidak punya koordinat, lewati validasi GPS
-  // (GPS hanya wajib jika admin sudah mengisi koordinat kegiatan)
+  // Catatan: fungsi ini SEKARANG cuma dipanggil kalau dataKegiatanAktif
+  // sudah pasti ada (dicek di DOMContentLoaded). Kalau kegiatan aktif tidak
+  // punya koordinat, itu artinya admin SENGAJA gak mengisi lokasi buat
+  // kegiatan ini -- jadi lokasi memang dibuka untuk semua tempat.
   if (!dataKegiatanAktif || !dataKegiatanAktif.latitude || !dataKegiatanAktif.longitude) {
-    tampilBannerGPS('info', '📍', 'Lokasi tidak dikonfigurasi. Kehadiran terbuka untuk semua lokasi.');
+    tampilBannerGPS('info', '📍', 'Lokasi tidak dikonfigurasi untuk kegiatan ini. Kehadiran terbuka untuk semua lokasi.');
     koordinatUserTerverifikasi = { lat: 0, lng: 0, dilewati: true };
     return;
   }
@@ -517,6 +527,31 @@ function kunciFormAbsensi() {
   if (sel) sel.disabled = true;
 }
 
+// Menutup TOTAL form absensi ketika memang tidak ada kegiatan aktif sama
+// sekali -- beda dari kunciFormAbsensi() yang cuma buat kasus GPS gagal saat
+// kegiatan-nya sendiri ADA. Di sini seluruh form (dropdown wilayah, daftar
+// nama, tombol) disembunyikan total, gak cuma tombolnya doang, biar gak ada
+// celah orang tetap ngisi & coba submit.
+function kunciFormTanpaKegiatan() {
+  const gpsBanner = document.getElementById('gpsStatusBanner');
+  if (gpsBanner) gpsBanner.style.display = 'none';
+
+  const selWilayah = document.getElementById('selectWilayah');
+  if (selWilayah) selWilayah.disabled = true;
+
+  const anggotaArea = document.getElementById('anggotaArea');
+  if (anggotaArea) anggotaArea.style.display = 'none';
+
+  const btn = document.getElementById('btnAbsen');
+  if (btn) btn.style.display = 'none';
+
+  const errorDiv = document.getElementById('pesanErrorAbsensi');
+  if (errorDiv) {
+    errorDiv.textContent = '🚫 Belum ada kegiatan aktif saat ini. Kehadiran tidak dapat dilakukan. Hubungi pengurus/admin bila ini keliru.';
+    errorDiv.style.display = 'block';
+  }
+}
+
 // Rumus Haversine: menghitung jarak dua koordinat GPS dalam meter
 // Ini rumus matematika standar, tidak perlu diubah
 function hitungJarak(lat1, lng1, lat2, lng2) {
@@ -598,6 +633,12 @@ function submitAbsensi() {
   const errorDiv = document.getElementById('pesanErrorAbsensi');
   errorDiv.style.display = 'none';
 
+  // ===== VALIDASI KEGIATAN AKTIF (lapisan pengaman tambahan) =====
+  if (!dataKegiatanAktif) {
+    errorDiv.textContent = '🚫 Belum ada kegiatan aktif saat ini. Kehadiran tidak dapat dilakukan.';
+    errorDiv.style.display = 'block';
+    return;
+  }
   // ===== VALIDASI GPS (lapisan pengaman terakhir sebelum kirim data) =====
   if (!koordinatUserTerverifikasi) {
     errorDiv.textContent = '🚫 Lokasi belum terverifikasi. Tunggu proses deteksi GPS selesai.';
