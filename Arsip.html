@@ -6,7 +6,7 @@
 <title>Arsip YASSA</title>
 <link rel="stylesheet" href="Style.css">
 </head>
-<body>
+<body data-auth-required="1">
 <div class="app-layout">
   <div class="sidebar-overlay"></div>
   <aside class="sidebar">
@@ -27,7 +27,7 @@
       <a class="nav-item" href="https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" target="_blank"><i>✅</i> Form Absensi</a>
       
       <!-- TOMBOL LOGOUT MANUAL -->
-      <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+      <a class="nav-item" href="javascript:void(0)" onclick="yassaLogoutSession(); logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
         <i>🚪</i> Keluar (Logout)
       </a>
     </nav>
