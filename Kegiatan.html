@@ -19,7 +19,7 @@
   .leaflet-control-geocoder { font-size:13px !important; }
 </style>
 </head>
-<body>
+<body data-auth-required="1">
 <div class="app-layout">
   <div class="sidebar-overlay"></div>
   <aside class="sidebar">
@@ -38,7 +38,7 @@
       <div class="nav-section-label">Akses Cepat</div>
       <a class="nav-item" href="https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" target="_blank"><i>✅</i> Form Absensi</a>
       
-      <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+      <a class="nav-item" href="javascript:void(0)" onclick="yassaLogoutSession(); logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
         <i>🚪</i> Keluar (Logout)
       </a>
     </nav>
@@ -52,7 +52,7 @@
     <div class="topbar">
       <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
       <div class="topbar-title">Manajemen Kegiatan</div>
-      <button class="btn btn-primary btn-sm" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
+      <button class="btn btn-primary btn-sm yassa-admin-only" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
       <button class="topbar-btn" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
     </div>
 
@@ -96,7 +96,7 @@
                  ini dibuka di dalam iframe mobile (YASSA GOPAY -> tab App ->
                  Absensi/Kegiatan). Tanpa ini, user mobile gak punya cara
                  sama sekali buat nambah kegiatan. -->
-            <button class="btn btn-primary btn-sm" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
+            <button class="btn btn-primary btn-sm yassa-admin-only" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
           </div>
         </div>
         <div class="card-body" style="padding:0">
@@ -264,7 +264,7 @@ function renderKegiatan(data) {
       <td class="text-muted">${escapeHtml(k.lokasi || '-')}</td>
       <td><span class="badge ${k.status==='Aktif'?'badge-green':'badge-gray'}">${k.status==='Aktif'?'🟢 Aktif':'⚫ Selesai'}</span></td>
       <td>
-        <div class="td-actions">
+        <div class="td-actions yassa-admin-only">
           ${k.status !== 'Aktif' ? `<button class="btn btn-success btn-sm" onclick="setStatus('${k.id}','Aktif')">▶ Aktifkan</button>` : `<button class="btn btn-warning btn-sm" onclick="setStatus('${k.id}','Selesai')">⏹ Selesaikan</button>`}
           <button class="btn btn-outline btn-sm" onclick="editKegiatan('${k.id}')">✏️</button>
           <button class="btn btn-danger btn-sm" onclick="hapusKegiatan('${k.id}')">🗑️</button>
