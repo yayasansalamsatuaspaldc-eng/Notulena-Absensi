@@ -91,6 +91,12 @@
           <div class="card-title">Daftar Kegiatan</div>
           <div class="card-actions">
             <span id="countLabel" class="text-muted text-sm"></span>
+            <!-- 🩹 FIX: tombol Tambah Kegiatan didup di sini juga (bukan cuma
+                 di .topbar), karena .topbar ternyata gak muncul saat halaman
+                 ini dibuka di dalam iframe mobile (YASSA GOPAY -> tab App ->
+                 Absensi/Kegiatan). Tanpa ini, user mobile gak punya cara
+                 sama sekali buat nambah kegiatan. -->
+            <button class="btn btn-primary btn-sm" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
           </div>
         </div>
         <div class="card-body" style="padding:0">
