@@ -1,3 +1,6 @@
+// === STATE SESI LOGIN (diisi setelah login / restore sesi) ===
+window.YASSA_AUTH = { token: null, user: null };
+
 // === JEMBATAN PENGHUBUNG GITHUB KE GAS ===
 const GAS_URL = "https://script.google.com/macros/s/AKfycbz5AONoccZluzzT-fl-aBGbfzzNcYEX7y4_7p8E8MGfa8ZU06DEiXokO4-k__5GWZKt0A/exec";
 
@@ -14,7 +17,7 @@ window.google = {
               fetch(GAS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: key, args: args })
+                body: JSON.stringify({ action: key, args: args, token: (window.YASSA_AUTH && window.YASSA_AUTH.token) || '' })
               })
               .then(res => res.json())
               .then(data => {
@@ -173,6 +176,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Inisialisasi tema tampilan gelap/terang
   initDarkMode();
 
+  // Halaman yang wajib login (punya atribut data-auth-required di <body>)
+  // akan menampilkan gerbang login & memuat sesi tersimpan terlebih dulu.
+  if (document.body.hasAttribute('data-auth-required')) {
+    yassaInitAuth();
+  }
+
   // ============ MODE EMBED (dipanggil dari YASSA Hub) ============
   // Kalau dibuka lewat overlay iframe Hub (?embed=1), sembunyikan
   // sidebar + topbar bawaan halaman ini biar gak dobel sama header Hub.
@@ -210,3 +219,172 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+
+// ============================================================
+// YASSA - AUTH & LOGIN TERPUSAT
+// Login sheet "Akun" terpusat (SAMA PERSIS dengan YASSA Hub & AWG/
+// Ahli Waris/Mobile) -- satu sumber akun buat semua app YASSA.
+// Hanya role SUPERADMIN & ADMIN yang boleh menambah/edit/hapus data;
+// role lain (kalau ada) cuma bisa lihat. Pembatasan asli ditegakkan
+// di server (Code.gs), ini cuma nyembunyiin tombolnya di tampilan.
+// ============================================================
+const YASSA_ADMIN_ROLES = ['SUPERADMIN', 'ADMIN'];
+
+function yassaRoleLabel(role) {
+  const map = {
+    SUPERADMIN: 'Super Admin',
+    ADMIN: 'Admin',
+    PENGURUS: 'Pengurus',
+    KORWIL: 'Korwil',
+    TIM_KERJA: 'Tim Kerja',
+    RELAWAN: 'Relawan'
+  };
+  return map[role] || role || '-';
+}
+
+function yassaIsAdmin() {
+  const user = window.YASSA_AUTH.user;
+  return !!(user && YASSA_ADMIN_ROLES.indexOf(String(user.role || '').toUpperCase()) !== -1);
+}
+
+function yassaInjectLoginGate() {
+  if (document.getElementById('yassaLoginGate')) return;
+  const gate = document.createElement('div');
+  gate.id = 'yassaLoginGate';
+  gate.className = 'yassa-login-gate';
+  gate.innerHTML =
+    '<div class="yassa-login-card">' +
+      '<div class="yassa-login-icon">🕌</div>' +
+      '<h2 class="yassa-login-title">YASSA Sistem Digital</h2>' +
+      '<p class="yassa-login-sub">Masuk dengan akun pengurus untuk melanjutkan</p>' +
+      '<div id="yassaLoginError" class="yassa-login-error" style="display:none"></div>' +
+      '<form id="yassaLoginForm">' +
+        '<div class="form-group">' +
+          '<label class="form-label">Username</label>' +
+          '<input type="text" id="yassaLoginUsername" class="form-control" placeholder="Username" autocomplete="username" required>' +
+        '</div>' +
+        '<div class="form-group mb-0">' +
+          '<label class="form-label">Password</label>' +
+          '<input type="password" id="yassaLoginPassword" class="form-control" placeholder="Password" autocomplete="current-password" required>' +
+        '</div>' +
+        '<button type="submit" id="yassaLoginBtn" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:18px">Masuk</button>' +
+      '</form>' +
+    '</div>';
+  document.body.appendChild(gate);
+  document.getElementById('yassaLoginForm').addEventListener('submit', yassaHandleLoginSubmit);
+}
+
+function yassaShowLoginGate() {
+  yassaInjectLoginGate();
+  document.getElementById('yassaLoginGate').style.display = 'flex';
+}
+
+function yassaHideLoginGate() {
+  const gate = document.getElementById('yassaLoginGate');
+  if (gate) gate.style.display = 'none';
+}
+
+function yassaShowLoginError(msg) {
+  const el = document.getElementById('yassaLoginError');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function yassaHandleLoginSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById('yassaLoginUsername').value.trim();
+  const password = document.getElementById('yassaLoginPassword').value;
+  const btn = document.getElementById('yassaLoginBtn');
+  document.getElementById('yassaLoginError').style.display = 'none';
+
+  if (!username) { yassaShowLoginError('Username wajib diisi.'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+
+  runGAS('login', username, password)
+    .then(function (res) {
+      window.YASSA_AUTH.token = res.token;
+      window.YASSA_AUTH.user = res;
+      sessionStorage.setItem('yassa_auth_token', res.token);
+      sessionStorage.setItem('yassa_auth_user', JSON.stringify(res));
+      yassaHideLoginGate();
+      yassaApplyUserUI();
+      showToast('Selamat datang, ' + (res.nama || res.username) + '!', 'success');
+    })
+    .catch(function (err) {
+      yassaShowLoginError(err.message || 'Username atau password salah.');
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.textContent = 'Masuk';
+    });
+}
+
+// Terapkan data user (nama/jabatan di sidebar) & sembunyikan tombol
+// tambah/edit/hapus data buat role selain SUPERADMIN/ADMIN.
+function yassaApplyUserUI() {
+  const user = window.YASSA_AUTH.user;
+  if (!user) return;
+
+  document.querySelectorAll('.sidebar-user-info .name').forEach(function (el) {
+    el.textContent = user.nama || user.username || '-';
+  });
+  document.querySelectorAll('.sidebar-user-info .role').forEach(function (el) {
+    el.textContent = user.jabatan || yassaRoleLabel(user.role);
+  });
+
+  const admin = yassaIsAdmin();
+  document.querySelectorAll('.yassa-admin-only').forEach(function (el) {
+    if (admin) el.classList.remove('yassa-admin-only');
+    else el.classList.add('yassa-admin-only');
+  });
+}
+
+// Dipanggil dari tombol "Keluar (Logout)" -- selain redirect bawaan
+// tiap halaman (logoutUtama), pastikan sesi server juga ditutup.
+function yassaLogoutSession() {
+  const token = window.YASSA_AUTH.token;
+  window.YASSA_AUTH.token = null;
+  window.YASSA_AUTH.user = null;
+  if (token) {
+    try { runGAS('logoutSession', token); } catch (e) { /* diabaikan */ }
+  }
+}
+
+// Dipanggil sekali di awal load halaman yang butuh login (body punya
+// atribut data-auth-required). Restore sesi dari sessionStorage kalau
+// ada & masih valid; kalau tidak, tampilkan gerbang login.
+function yassaInitAuth() {
+  yassaInjectLoginGate();
+  const savedToken = sessionStorage.getItem('yassa_auth_token');
+  const savedUser = sessionStorage.getItem('yassa_auth_user');
+
+  if (!savedToken || !savedUser) {
+    yassaShowLoginGate();
+    return;
+  }
+
+  window.YASSA_AUTH.token = savedToken;
+  try { window.YASSA_AUTH.user = JSON.parse(savedUser); } catch (e) { window.YASSA_AUTH.user = null; }
+  // Tampilkan dulu pakai data tersimpan (biar gak keliatan gerbang login
+  // sekilas), lalu validasi ulang ke server di belakang layar.
+  yassaHideLoginGate();
+  yassaApplyUserUI();
+
+  runGAS('checkSession', savedToken)
+    .then(function (session) {
+      window.YASSA_AUTH.user = session;
+      sessionStorage.setItem('yassa_auth_user', JSON.stringify(session));
+      yassaApplyUserUI();
+    })
+    .catch(function () {
+      sessionStorage.removeItem('yassa_auth_token');
+      sessionStorage.removeItem('yassa_auth_user');
+      window.YASSA_AUTH.token = null;
+      window.YASSA_AUTH.user = null;
+      yassaShowLoginGate();
+    });
+}
