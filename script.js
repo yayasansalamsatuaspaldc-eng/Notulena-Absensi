@@ -253,6 +253,12 @@ function yassaInjectLoginGate() {
   const gate = document.createElement('div');
   gate.id = 'yassaLoginGate';
   gate.className = 'yassa-login-gate';
+  // Disembunyikan dulu secara default -- baru ditampilkan lewat
+  // yassaShowLoginGate() kalau memang perlu (login manual / SSO gagal).
+  // Tanpa ini, form login sempat "kedip" muncul sebentar begitu elemen
+  // dibuat di yassaInitAuth(), padahal proses cek hubToken/sesi tersimpan
+  // masih berjalan di belakang layar (butuh waktu request ke server).
+  gate.style.display = 'none';
   gate.innerHTML =
     '<div class="yassa-login-card">' +
       '<div class="yassa-login-icon">🕌</div>' +
@@ -373,6 +379,11 @@ function yassaInitAuth() {
 
   const hubToken = yassaGetUrlParam_('hubToken');
   if (hubToken) {
+    // Gerbang login sudah disembunyikan default (lihat yassaInjectLoginGate),
+    // tapi selama tiket Hub ini divalidasi ke server (butuh waktu), jangan
+    // biarin layar keliatan kosong/blank -- tampilkan overlay "Sedang
+    // mengambil data..." biar user tau app-nya lagi kerja, bukan macet.
+    showLoading('Sedang mengambil data...');
     runGAS('loginWithHubToken', hubToken)
       .then(function (res) {
         window.YASSA_AUTH.token = res.token;
@@ -381,6 +392,7 @@ function yassaInitAuth() {
         sessionStorage.setItem('yassa_auth_user', JSON.stringify(res));
         yassaHideLoginGate();
         yassaApplyUserUI();
+        hideLoading();
         // Buang ?hubToken= dari address bar (bukan cuma kosmetik --
         // biar gak ke-refresh pakai tiket yang sama/basi lagi nanti).
         try {
@@ -390,6 +402,7 @@ function yassaInitAuth() {
         } catch (e) { /* diabaikan */ }
       })
       .catch(function () {
+        hideLoading();
         // Tiket Hub gagal/kadaluarsa -- coba jalur normal di bawah,
         // jangan langsung nyerah nampilin gerbang login.
         yassaInitAuthNormal_();
