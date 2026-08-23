@@ -65,7 +65,7 @@
 .qr-url { font-size: 11px; color: var(--text-muted); word-break: break-all; margin-top: 8px; }
 </style>
 </head>
-<body>
+<body data-auth-required="1">
 <div class="app-layout">
   <!-- Sidebar -->
   <div class="sidebar-overlay"></div>
@@ -90,7 +90,7 @@
       <a class="nav-item" href="https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" target="_blank"><i>✅</i> Form Kehadiran</a>
 
       <!-- TOMBOL LOGOUT MANUAL -->
-      <a class="nav-item" href="javascript:void(0)" onclick="logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
+      <a class="nav-item" href="javascript:void(0)" onclick="yassaLogoutSession(); logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
         <i>🚪</i> Keluar (Logout)
       </a>
     </nav>
@@ -144,7 +144,7 @@
           <h3>Arsip</h3>
           <p>Pencarian & ekspor laporan PDF kegiatan</p>
         </a>
-        <div class="portal-card" onclick="openModal('modalSetup')">
+        <div class="portal-card yassa-admin-only" onclick="openModal('modalSetup')">
           <div class="portal-card-icon" style="background:#f1f5f9">⚙️</div>
           <h3>Setup Sistem</h3>
           <p>Inisialisasi database & folder Drive pertama kali</p>
