@@ -156,10 +156,10 @@ function debounce(fn, wait = 300) {
 // ---- GAS runner ----
 function runGAS(fnName, ...args) {
   return new Promise((resolve, reject) => {
-    const call = args.length ? google.script.run[fnName](...args) : google.script.run[fnName]();
-    call
+    google.script.run
       .withSuccessHandler(resolve)
-      .withFailureHandler(reject);
+      .withFailureHandler(reject)
+      [fnName](...args);
   });
 }
 
