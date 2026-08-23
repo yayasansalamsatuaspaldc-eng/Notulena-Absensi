@@ -548,3 +548,59 @@ tbody tr:hover { background: var(--surface2); }
 .embed-mode .main-content {
   margin-left: 0 !important;
 }
+
+
+/* ============================================================
+   YASSA - GERBANG LOGIN (dipakai script.js di halaman yang
+   butuh login: Beranda, Dashboard, Kegiatan, Notulen, Arsip)
+   ============================================================ */
+.yassa-login-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  padding: 20px;
+}
+.yassa-login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 30px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.yassa-login-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: var(--primary-light);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  margin: 0 auto 16px;
+}
+.yassa-login-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--text); }
+.yassa-login-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+.yassa-login-error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  margin-bottom: 16px;
+  text-align: left;
+}
+.yassa-login-card .form-group { text-align: left; }
+
+/* Elemen (tombol tambah/edit/hapus data, dsb) yang cuma boleh
+   tampil buat role SUPERADMIN & ADMIN. Disembunyikan default,
+   dimunculkan oleh yassaApplyUserUI() di script.js kalau rolenya cocok. */
+.yassa-admin-only { display: none; }
