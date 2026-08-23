@@ -354,11 +354,55 @@ function yassaLogoutSession() {
   }
 }
 
+function yassaGetUrlParam_(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
+
 // Dipanggil sekali di awal load halaman yang butuh login (body punya
-// atribut data-auth-required). Restore sesi dari sessionStorage kalau
-// ada & masih valid; kalau tidak, tampilkan gerbang login.
+// atribut data-auth-required).
+//
+// Urutan prioritas:
+// 1) Kalau app ini dibuka dari menu App di YASSA Hub, URL-nya bawa
+//    ?hubToken=... (tiket sesi Hub) -- coba SSO dulu lewat
+//    loginWithHubToken() biar user gak disuruh login manual lagi.
+// 2) Kalau tidak ada hubToken (atau ternyata gagal/basi), lanjut ke
+//    alur normal: restore sesi tersimpan (sessionStorage) atau
+//    tampilkan gerbang login manual.
 function yassaInitAuth() {
   yassaInjectLoginGate();
+
+  const hubToken = yassaGetUrlParam_('hubToken');
+  if (hubToken) {
+    runGAS('loginWithHubToken', hubToken)
+      .then(function (res) {
+        window.YASSA_AUTH.token = res.token;
+        window.YASSA_AUTH.user = res;
+        sessionStorage.setItem('yassa_auth_token', res.token);
+        sessionStorage.setItem('yassa_auth_user', JSON.stringify(res));
+        yassaHideLoginGate();
+        yassaApplyUserUI();
+        // Buang ?hubToken= dari address bar (bukan cuma kosmetik --
+        // biar gak ke-refresh pakai tiket yang sama/basi lagi nanti).
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('hubToken');
+          window.history.replaceState({}, document.title, url.toString());
+        } catch (e) { /* diabaikan */ }
+      })
+      .catch(function () {
+        // Tiket Hub gagal/kadaluarsa -- coba jalur normal di bawah,
+        // jangan langsung nyerah nampilin gerbang login.
+        yassaInitAuthNormal_();
+      });
+    return;
+  }
+
+  yassaInitAuthNormal_();
+}
+
+// Restore sesi dari sessionStorage kalau ada & masih valid; kalau
+// tidak, tampilkan gerbang login manual.
+function yassaInitAuthNormal_() {
   const savedToken = sessionStorage.getItem('yassa_auth_token');
   const savedUser = sessionStorage.getItem('yassa_auth_user');
 
