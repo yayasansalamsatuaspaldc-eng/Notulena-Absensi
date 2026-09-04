@@ -633,7 +633,14 @@ function submitAbsensi() {
   btn.disabled = true;
   btn.innerHTML = '<span>⏳</span> MENYIMPAN...';
 
-  const payload = { nama: String(nama), wilayah: String(wilayah) };
+  const payload = {
+    nama: String(nama),
+    wilayah: String(wilayah),
+    lat: koordinatUserTerverifikasi.dilewati ? null : koordinatUserTerverifikasi.lat,
+    lng: koordinatUserTerverifikasi.dilewati ? null : koordinatUserTerverifikasi.lng,
+    jarakMeter: koordinatUserTerverifikasi.dilewati ? null : koordinatUserTerverifikasi.jarak,
+    lokasiDilewati: !!koordinatUserTerverifikasi.dilewati
+  };
 
   google.script.run
     .withSuccessHandler(res => {
