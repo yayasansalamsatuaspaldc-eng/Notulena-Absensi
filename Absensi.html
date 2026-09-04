@@ -7,10 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --primary: #2563eb; 
-  --primary-light: #60a5fa; 
-  --primary-dark: #1e3a8a;
-  --accent: #10b981;
+  --primary: #059669; 
+  --primary-light: #34d399; 
+  --primary-dark: #0f172a;
+  --accent: #0d9488;
+  --navy: #1e3a5f;
   --danger: #ef4444; 
   --surface: rgba(255, 255, 255, 0.85); 
   --text: #1e293b; 
@@ -21,7 +22,7 @@
 /* Animated 3D Background */
 body {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background: linear-gradient(-45deg, #0f172a, #1e3a8a, #3b82f6, #0ea5e9);
+  background: linear-gradient(-45deg, #0f172a, #1e3a5f, #065f46, #059669);
   background-size: 400% 400%;
   animation: gradientBG 15s ease infinite;
   min-height: 100vh; 
@@ -113,7 +114,7 @@ body {
 
 /* Banner Kegiatan */
 .kegiatan-banner { 
-  background: linear-gradient(135deg, #ffffff, #eff6ff); 
+  background: linear-gradient(135deg, #ffffff, #ecfdf5); 
   border: 1px solid rgba(255, 255, 255, 0.8); 
   border-radius: 16px; padding: 16px; margin-bottom: 24px; 
   display: flex; align-items: center; gap: 14px; 
@@ -171,7 +172,7 @@ body {
   width: 8px; height: 8px; background: white; border-radius: 50%;
 }
 .radio-item.selected { 
-  border-color: var(--primary-light); background: #eff6ff; 
+  border-color: var(--primary-light); background: #ecfdf5; 
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
 }
 .lainnya-input { display: none; margin-top: 10px; }
@@ -179,10 +180,10 @@ body {
 /* Tombol 3D Mechanis */
 .btn-absen {
   width: 100%; padding: 16px; 
-  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  background: linear-gradient(180deg, #10b981, #059669);
   color: #fff; font-size: 16px; font-weight: 800; letter-spacing: 0.5px;
-  border: 1px solid #1d4ed8; border-radius: 16px; cursor: pointer;
-  box-shadow: 0 8px 0 #1e3a8a, 0 15px 25px rgba(0,0,0,0.2);
+  border: 1px solid #047857; border-radius: 16px; cursor: pointer;
+  box-shadow: 0 8px 0 #0f172a, 0 15px 25px rgba(0,0,0,0.25);
   transform: translateY(0); transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex; justify-content: center; align-items: center; gap: 8px;
 }
@@ -191,30 +192,6 @@ body {
   transform: translateY(8px);
 }
 .btn-absen:disabled { opacity: 0.7; cursor: not-allowed; transform: translateY(8px); box-shadow: none; }
-
-/* Modal Login - Glassmorphism */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); z-index: 999;
-  display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px);
-}
-.modal-login { 
-  background: rgba(255, 255, 255, 0.95); 
-  width: 340px; padding: 32px 28px; 
-  border-radius: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.5);
-  transform: scale(0.9); animation: modalIn 0.3s forwards cubic-bezier(0.4, 0, 0.2, 1);
-}
-@keyframes modalIn { to { transform: scale(1); } }
-.modal-login h3 { text-align: center; margin-bottom: 24px; font-weight: 800; color: var(--primary-dark); }
-.modal-btns { display: flex; gap: 12px; margin-top: 24px; }
-.modal-btns button { 
-  flex: 1; padding: 12px; border-radius: 12px; border: none; 
-  font-weight: 700; cursor: pointer; transition: 0.2s; 
-}
-.btn-cancel { background: #f1f5f9; color: #475569; }
-.btn-cancel:hover { background: #e2e8f0; }
-.btn-submit { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-.btn-submit:hover { background: var(--primary-dark); }
 
 /* Success State */
 .success-screen { display: none; text-align: center; padding: 20px 0; }
@@ -235,24 +212,6 @@ body {
   <span style="font-size:16px;">←</span> Kembali
 </button>
 
-<button class="btn-login-top" onclick="openLogin()">
-  <span style="font-size:16px;">🔐</span> Admin
-</button>
-
-<div class="modal-overlay" id="loginModal">
-  <div class="modal-login">
-    <h3>Akses Sistem</h3>
-    <div id="loginError" style="display:none; color: #ef4444; background: #fee2e2; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-align: center; margin-bottom: 16px; border: 1px solid #fca5a5;"></div>
-    
-    <input type="text" id="username" class="form-control" placeholder="Username" style="margin-bottom:12px">
-    <input type="password" id="password" class="form-control" placeholder="Password">
-    
-    <div class="modal-btns">
-      <button class="btn-cancel" onclick="closeLogin()">Batal</button>
-      <button class="btn-submit" id="btnLogin" onclick="doLogin()">Masuk</button>
-    </div>
-  </div>
-</div>
 
 <div class="absensi-wrapper">
   <div class="absensi-header">
@@ -701,46 +660,6 @@ function submitAbsensi() {
     .submitAbsensi(payload);
 }
 
-// Fungsi Login Admin (tidak berubah)
-function openLogin() {
-  document.getElementById('loginModal').style.display = 'flex';
-  document.getElementById('loginError').style.display = 'none';
-}
-function closeLogin() {
-  document.getElementById('loginModal').style.display = 'none';
-  document.getElementById('username').value = '';
-  document.getElementById('password').value = '';
-}
-function doLogin() {
-  const u = document.getElementById('username').value;
-  const p = document.getElementById('password').value;
-  const btn = document.getElementById('btnLogin');
-  const errorMsg = document.getElementById('loginError');
-  errorMsg.style.display = 'none';
-  btn.textContent = 'Memproses...';
-  btn.disabled = true;
-  google.script.run
-            .withSuccessHandler(res => {
-              if(res && res.success) {
-                // [SESUDAH] Fallback URL jika res.url bermasalah
-                const baseUrl = window.location.href.split('?')[0];
-                // Mengubah '_top' menjadi '_self' agar setelah login sukses tetap berada di dalam Blogger
-                window.open(res.url || (baseUrl + '?page=index'), '_self');
-              } else { 
-                errorMsg.textContent = res ? res.message : 'Akses Ditolak';
-        errorMsg.style.display = 'block';
-        btn.textContent = 'Masuk';
-        btn.disabled = false;
-      }
-    })
-    .withFailureHandler(err => {
-      errorMsg.textContent = 'Error Jaringan: ' + err.message;
-      errorMsg.style.display = 'block';
-      btn.textContent = 'Masuk';
-      btn.disabled = false;
-    })
-    .verifyAdmin(String(u), String(p));
-}
 </script>
 </body>
 </html>
