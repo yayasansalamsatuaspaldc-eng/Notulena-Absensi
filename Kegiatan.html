@@ -58,13 +58,16 @@
 
     <div class="page-content">
       <div id="activeBanner" style="display:none" class="mb-4">
-        <div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px">
-          <span style="font-size:24px">🟢</span>
-          <div style="flex:1">
-            <div style="font-weight:700;font-size:15px" id="activeTitle">-</div>
-            <div style="font-size:12px;color:#065f46" id="activeMeta">-</div>
+        <div style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);border:1px solid #6ee7b7;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span style="font-size:28px">🟢</span>
+          <div style="flex:1;min-width:200px">
+            <div style="font-weight:800;font-size:16px;color:#065f46" id="activeTitle">-</div>
+            <div style="font-size:12.5px;color:#047857;margin-top:2px" id="activeMeta">-</div>
           </div>
-          <span class="badge badge-green">Kegiatan Aktif</span>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="badge badge-green" style="font-size:12px;padding:5px 12px">Kegiatan Aktif</span>
+            <button class="btn btn-warning btn-sm" id="btnSelesaiBanner" style="font-weight:700">⏹ Selesaikan Kegiatan</button>
+          </div>
         </div>
       </div>
 
@@ -91,12 +94,8 @@
           <div class="card-title">Daftar Kegiatan</div>
           <div class="card-actions">
             <span id="countLabel" class="text-muted text-sm"></span>
-            <!-- 🩹 FIX: tombol Tambah Kegiatan didup di sini juga (bukan cuma
-                 di .topbar), karena .topbar ternyata gak muncul saat halaman
-                 ini dibuka di dalam iframe mobile (YASSA GOPAY -> tab App ->
-                 Absensi/Kegiatan). Tanpa ini, user mobile gak punya cara
-                 sama sekali buat nambah kegiatan. -->
-            <button class="btn btn-primary btn-sm yassa-admin-only" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
+            <!-- Tombol Tambah Kegiatan -->
+            <button class="btn btn-primary btn-sm" onclick="openModal('modalAddKegiatan')">+ Tambah Kegiatan</button>
           </div>
         </div>
         <div class="card-body" style="padding:0">
@@ -264,10 +263,13 @@ function renderKegiatan(data) {
       <td class="text-muted">${escapeHtml(k.lokasi || '-')}</td>
       <td><span class="badge ${k.status==='Aktif'?'badge-green':'badge-gray'}">${k.status==='Aktif'?'🟢 Aktif':'⚫ Selesai'}</span></td>
       <td>
-        <div class="td-actions yassa-admin-only">
-          ${k.status !== 'Aktif' ? `<button class="btn btn-success btn-sm" onclick="setStatus('${k.id}','Aktif')">▶ Aktifkan</button>` : `<button class="btn btn-warning btn-sm" onclick="setStatus('${k.id}','Selesai')">⏹ Selesaikan</button>`}
-          <button class="btn btn-outline btn-sm" onclick="editKegiatan('${k.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="hapusKegiatan('${k.id}')">🗑️</button>
+        <div class="td-actions">
+          ${k.status === 'Aktif' 
+            ? `<button class="btn btn-warning btn-sm" onclick="setStatus('${k.id}','Selesai')" title="Selesaikan kegiatan ini">⏹ Selesaikan</button>` 
+            : `<button class="btn btn-success btn-sm" onclick="setStatus('${k.id}','Aktif')" title="Aktifkan kegiatan ini">▶ Aktifkan</button>`
+          }
+          <button class="btn btn-outline btn-sm" onclick="editKegiatan('${k.id}')" title="Edit kegiatan">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="hapusKegiatan('${k.id}')" title="Hapus kegiatan">🗑️</button>
         </div>
       </td>
     </tr>
@@ -281,6 +283,11 @@ function updateActiveBanner(data) {
     banner.style.display = 'block';
     document.getElementById('activeTitle').textContent = aktif.nama;
     document.getElementById('activeMeta').textContent = `📍 ${aktif.lokasi || '-'} · 📆 ${aktif.tanggal || '-'}`;
+    
+    const btnSelesai = document.getElementById('btnSelesaiBanner');
+    if (btnSelesai) {
+      btnSelesai.onclick = function() { setStatus(aktif.id, 'Selesai'); };
+    }
   } else {
     banner.style.display = 'none';
   }
@@ -396,12 +403,21 @@ function ambilKoordinatSekarang() {
 }
 
 function setStatus(id, status) {
-  if (status === 'Aktif' && !confirm(`Aktifkan kegiatan ini? Kegiatan aktif sebelumnya akan dinonaktifkan.`)) return;
-  showLoading('Mengubah status...');
+  const pesan = status === 'Aktif' 
+    ? 'Aktifkan kegiatan ini? Kegiatan aktif sebelumnya akan otomatis diselesaikan.' 
+    : 'Selesaikan kegiatan ini? Setelah selesai, kehadiran untuk kegiatan ini akan ditutup.';
+  if (!confirm(pesan)) return;
+
+  showLoading(status === 'Aktif' ? 'Mengaktifkan kegiatan...' : 'Menyelesaikan kegiatan...');
   google.script.run
     .withSuccessHandler(function(res) {
       hideLoading();
-      if (res.success) { showToast('Status diperbarui!', 'success'); loadKegiatan(); }
+      if (res.success) { 
+        showToast(status === 'Aktif' ? 'Kegiatan berhasil diaktifkan!' : 'Kegiatan berhasil diselesaikan!', 'success'); 
+        loadKegiatan(); 
+      } else {
+        showToast(res.message || 'Gagal mengubah status', 'error');
+      }
     })
     .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
     .updateKegiatanStatus(id, status);
