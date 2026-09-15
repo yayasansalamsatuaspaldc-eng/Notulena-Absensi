@@ -271,17 +271,20 @@ function loadKegiatan() {
     .withSuccessHandler(function(list) {
       ['selectKegiatanNotulen','selectKegiatanPaste','selectKegiatanOcr'].forEach(id => {
         const sel = document.getElementById(id);
+        if (!sel) return;
         sel.innerHTML = '<option value="">-- Pilih Kegiatan --</option>';
-        list.forEach(k => {
-          // [SESUDAH] Saring kegiatan: Jika statusnya tidak aktif (Selesai), maka abaikan/jangan dimasukkan ke dropdown
-          if (k.status !== 'Aktif') return;
-
-          const opt = document.createElement('option');
-          opt.value = k.nama;
-          opt.textContent = k.nama + (k.status === 'Aktif' ? ' 🟢' : '');
-          sel.appendChild(opt);
-        });
+        if (Array.isArray(list)) {
+          list.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k.nama;
+            opt.textContent = k.nama + (k.status === 'Aktif' ? ' 🟢' : ' (Selesai)');
+            sel.appendChild(opt);
+          });
+        }
       });
+    })
+    .withFailureHandler(function(err) {
+      showToast('Gagal memuat daftar kegiatan: ' + (err.message || ''), 'error');
     })
     .getKegiatan();
 }
@@ -289,8 +292,14 @@ function loadKegiatan() {
 function loadNotulen() {
   google.script.run
     .withSuccessHandler(function(data) {
-      allNotulen = data;
-      renderNotulen(data);
+      allNotulen = data || [];
+      renderNotulen(allNotulen);
+    })
+    .withFailureHandler(function(err) {
+      const container = document.getElementById('notulenList');
+      if (container) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h4>Gagal memuat notulen</h4><p>${escapeHtml(err.message || 'Koneksi bermasalah')}</p></div>`;
+      }
     })
     .getNotulen();
 }
@@ -446,10 +455,7 @@ if (dropZone) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  loadKegiatan();
-  loadNotulen();
-  // ============================================================
+// ============================================================
 // FUNGSI KOMPRESI GAMBAR (FRONTEND)
 // ============================================================
 function compressImage(file, callback) {
@@ -482,58 +488,12 @@ function compressImage(file, callback) {
   };
   reader.readAsDataURL(file);
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadKegiatan();
+  loadNotulen();
 });
-// ============================================================
-// SISTEM LOGOUT OTOMATIS (IDLE TIMER)
-// ============================================================
 
-// Set waktu batas diam (dalam menit).
-// Bisa Anda ubah misal jadi 10 atau 15.
-// ============================================================
-// SISTEM LOGOUT & IDLE TIMER (GLOBAL)
-// ============================================================
-
-const WAKTU_IDLE_MENIT = 5;
-let idleTimer;
-
-function resetIdleTimer() {
-  clearTimeout(idleTimer);
-  idleTimer = setTimeout(logoutUtama, WAKTU_IDLE_MENIT * 60 * 1000);
-}
-
-function logoutUtama() {
-  try {
-    if (typeof showLoading === "function") {
-      showLoading('Keluar dari sistem...');
-    }
-    
-    // 1. Sapu bersih seluruh data sesi dan memori browser seketika
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // 2. Siapkan parameter anti-cache
-    const cacheBuster = new Date().getTime();
-    // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
-    const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
-    // 4. Lakukan pengalihan paksa
-    window.location.replace(logoutUrl);
-      
-  } catch (error) {
-    console.error("Logout error: ", error);
-    // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
-    window.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
-  }
-}
-
-// [SESUDAH] Sensor aktivitas dipusatkan di sini menggunakan Event Listener yang lebih aman
-window.addEventListener('load', resetIdleTimer);
-document.addEventListener('mousemove', resetIdleTimer);
-document.addEventListener('keypress', resetIdleTimer);
-document.addEventListener('touchstart', resetIdleTimer);
-document.addEventListener('click', resetIdleTimer);
-document.addEventListener('scroll', resetIdleTimer);
-// Set waktu batas diam (dalam menit).
-// Bisa Anda ubah misal jadi 10 atau 15.
 // ============================================================
 // SISTEM LOGOUT & IDLE TIMER (GLOBAL)
 // ============================================================
@@ -542,7 +502,7 @@ const WAKTU_IDLE_MENIT = 5;
 const WAKTU_MAKSIMAL_MENIT = 600; // Batas maksimum sesi login (600 menit / 10 jam)
 let idleTimer;
 
-// [TAMBAHAN] Paksa logout otomatis setelah 600 menit tanpa toleransi aktivitas
+// Paksa logout otomatis setelah 600 menit tanpa toleransi aktivitas
 setTimeout(logoutUtama, WAKTU_MAKSIMAL_MENIT * 60 * 1000);
 
 function resetIdleTimer() {
@@ -573,6 +533,14 @@ function logoutUtama() {
     window.location.replace('https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi');
   }
 }
+
+// Sensor aktivitas dipusatkan di sini menggunakan Event Listener yang lebih aman
+window.addEventListener('load', resetIdleTimer);
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('keypress', resetIdleTimer);
+document.addEventListener('touchstart', resetIdleTimer);
+document.addEventListener('click', resetIdleTimer);
+document.addEventListener('scroll', resetIdleTimer);
 
 </script>
 </body>
