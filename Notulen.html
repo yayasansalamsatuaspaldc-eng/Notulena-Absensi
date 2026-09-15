@@ -157,7 +157,7 @@
                   <textarea id="inputNotulen" class="form-control notulen-editor"
                     placeholder="1. PEMBUKAAN&#10;Rapat dibuka oleh...&#10;&#10;2. AGENDA PEMBAHASAN&#10;- ...&#10;&#10;3. HASIL DISKUSI&#10;...&#10;&#10;4. KEPUTUSAN&#10;...&#10;&#10;5. TINDAK LANJUT&#10;...&#10;&#10;6. PENUTUP&#10;Rapat ditutup pukul..."></textarea>
                 </div>
-                <button class="btn btn-primary" onclick="saveNotulen()" style="width:100%">💾 Simpan Notulen</button>
+                <button class="btn btn-primary" id="btnSaveManual" onclick="saveNotulen()" style="width:100%">💾 Simpan Notulen</button>
               </div>
 
               <!-- Tab: Paste -->
@@ -176,7 +176,7 @@
                 </div>
                 <div class="d-flex gap-2">
                   <button class="btn btn-outline" onclick="transferPaste()" style="flex:1">📤 Transfer ke Editor</button>
-                  <button class="btn btn-primary" onclick="savePaste()" style="flex:1">💾 Simpan</button>
+                  <button class="btn btn-primary" id="btnSavePaste" onclick="savePaste()" style="flex:1">💾 Simpan</button>
                 </div>
               </div>
 
@@ -203,7 +203,7 @@
                 <div id="ocrResultArea" style="display:none">
                   <label class="form-label mt-4">Hasil OCR (dapat diedit sebelum disimpan)</label>
                   <textarea id="ocrResult" class="form-control" style="min-height:180px"></textarea>
-                  <button class="btn btn-primary mt-4" onclick="saveOcr()" style="width:100%">💾 Simpan Notulen dari OCR</button>
+                  <button class="btn btn-primary mt-4" id="btnSaveOcr" onclick="saveOcr()" style="width:100%">💾 Simpan Notulen dari OCR</button>
                 </div>
               </div>
             </div>
@@ -249,6 +249,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeModal('modalViewNotulen')">Tutup</button>
+      <button class="btn btn-primary" onclick="editNotulenFromModal()">✏️ Edit di Form</button>
     </div>
   </div>
 </div>
@@ -318,7 +319,10 @@ function renderNotulen(list) {
           <div class="notulen-list-kegiatan">${escapeHtml(n.kegiatan)}</div>
           <div class="notulen-list-date">📅 ${escapeHtml(n.tanggal)} · ✍️ ${escapeHtml(n.dibuatOleh)}</div>
         </div>
-        <button class="btn btn-outline btn-sm" onclick="viewNotulen(${i})">👁 Lihat</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-outline btn-sm" onclick="viewNotulen(${i})">👁 Lihat</button>
+          <button class="btn btn-outline btn-sm" style="color:#ef4444;border-color:#fca5a5" onclick="confirmDeleteNotulen(${i})" title="Hapus notulen ini">🗑️</button>
+        </div>
       </div>
       <div class="notulen-list-preview">${escapeHtml((n.notulen || '').slice(0, 120))}${(n.notulen||'').length > 120 ? '...' : ''}</div>
     </div>
@@ -334,12 +338,54 @@ function filterNotulen() {
   ));
 }
 
+let currentViewIndex = -1;
+
 function viewNotulen(idx) {
+  currentViewIndex = idx;
   const n = allNotulen[idx];
   if (!n) return;
   document.getElementById('viewNotulenTitle').textContent = n.kegiatan;
   document.getElementById('viewNotulenContent').textContent = n.notulen || '(kosong)';
   openModal('modalViewNotulen');
+}
+
+function editNotulenFromModal() {
+  if (currentViewIndex < 0 || !allNotulen[currentViewIndex]) return;
+  const n = allNotulen[currentViewIndex];
+  closeModal('modalViewNotulen');
+  switchTab('manual');
+  
+  const sel = document.getElementById('selectKegiatanNotulen');
+  if (sel) sel.value = n.kegiatan;
+  const inpNotulen = document.getElementById('inputNotulen');
+  if (inpNotulen) inpNotulen.value = n.notulen || '';
+  const inpOleh = document.getElementById('inputDibuatOleh');
+  if (inpOleh && n.dibuatOleh) inpOleh.value = n.dibuatOleh;
+  
+  showToast('Notulen dimuat ke form editor.', 'info');
+}
+
+function confirmDeleteNotulen(idx) {
+  const n = allNotulen[idx];
+  if (!n) return;
+  if (!confirm('Apakah Anda yakin ingin menghapus notulen kegiatan:\n"' + n.kegiatan + '" (' + n.tanggal + ')?')) return;
+  
+  showLoading('Menghapus notulen...');
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoading();
+      if (res.success) {
+        showToast(res.message || 'Notulen berhasil dihapus!', 'success');
+        loadNotulen();
+      } else {
+        showToast(res.message || 'Gagal menghapus notulen', 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      hideLoading();
+      showToast('Error: ' + (err.message || 'Gagal menghapus'), 'error');
+    })
+    .deleteNotulen(n.kegiatan, n.tanggal);
 }
 
 function saveNotulen() {
@@ -376,13 +422,43 @@ function saveOcr() {
   _doSaveNotulen(kegiatan, notulen, 'OCR - Sekretaris');
 }
 
+let isSavingNotulen = false;
+
 function _doSaveNotulen(kegiatan, notulen, dibuatOleh) {
+  if (isSavingNotulen) {
+    showToast('Sedang memproses penyimpanan, mohon tunggu sebentar...', 'warning');
+    return;
+  }
+  isSavingNotulen = true;
+  
+  const saveBtns = [
+    document.getElementById('btnSaveManual'),
+    document.getElementById('btnSavePaste'),
+    document.getElementById('btnSaveOcr')
+  ].filter(Boolean);
+  
+  saveBtns.forEach(b => {
+    b.disabled = true;
+    b.dataset.oldText = b.innerHTML;
+    b.innerHTML = '⏳ Menyimpan...';
+  });
+
   showLoading('Menyimpan notulen...');
+  
+  function resetSaveButtons() {
+    isSavingNotulen = false;
+    hideLoading();
+    saveBtns.forEach(b => {
+      b.disabled = false;
+      if (b.dataset.oldText) b.innerHTML = b.dataset.oldText;
+    });
+  }
+
   google.script.run
     .withSuccessHandler(function(res) {
-      hideLoading();
+      resetSaveButtons();
       if (res.success) {
-        showToast(res.message, 'success');
+        showToast(res.message || 'Notulen berhasil disimpan!', 'success');
         loadNotulen();
         document.getElementById('inputNotulen').value = '';
         document.getElementById('inputPaste').value = '';
@@ -391,7 +467,10 @@ function _doSaveNotulen(kegiatan, notulen, dibuatOleh) {
         showToast(res.message || 'Gagal menyimpan', 'error');
       }
     })
-    .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .withFailureHandler(function(err) {
+      resetSaveButtons();
+      showToast('Error: ' + (err.message || 'Koneksi ke server bermasalah'), 'error');
+    })
     .saveNotulen({ kegiatan, notulen, dibuatOleh: dibuatOleh || 'Sekretaris' });
 }
 
