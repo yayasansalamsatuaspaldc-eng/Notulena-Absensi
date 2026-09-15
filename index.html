@@ -3,79 +3,93 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>YASSA - Sistem Digital</title>
+<title>Notulen YASSA</title>
 <link rel="stylesheet" href="Style.css">
 <style>
-.portal-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
-  margin-top: 32px;
+.notulen-editor {
+  min-height: 300px;
+  font-size: 14px;
+  line-height: 1.7;
+  font-family: 'Plus Jakarta Sans', sans-serif;
 }
-.portal-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px 22px;
+.format-section {
+  background: var(--surface2);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.format-section strong { color: var(--text); }
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+}
+.tab-btn {
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all .2s;
+  font-family: inherit;
+}
+.tab-btn.active {
+  color: var(--primary-light);
+  border-bottom-color: var(--primary-light);
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.ocr-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 40px 20px;
   text-align: center;
   cursor: pointer;
   transition: all .2s;
-  text-decoration: none;
-  color: var(--text);
-  display: block;
+  background: var(--surface2);
 }
-.portal-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
-.portal-card-icon {
-  width: 60px; height: 60px;
-  border-radius: 14px;
-  display: grid; place-items: center;
-  font-size: 28px;
-  margin: 0 auto 14px;
-}
-.portal-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
-.portal-card p { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
-.hero { text-align: center; padding: 48px 20px 0; }
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #eff6ff;
-  color: #1e40af;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: 99px;
-  margin-bottom: 16px;
-  border: 1px solid #bfdbfe;
-}
-.hero h1 { font-size: 34px; font-weight: 800; line-height: 1.2; }
-.hero p { font-size: 15px; color: var(--text-muted); margin-top: 10px; max-width: 480px; margin-left: auto; margin-right: auto; }
-.qr-section {
-  background: var(--surface);
+.ocr-upload-area:hover { border-color: var(--primary-light); background: #eff6ff; }
+.ocr-upload-area.dragover { border-color: var(--primary-light); background: #dbeafe; }
+.ocr-result {
+  background: var(--surface2);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-  text-align: center;
-  max-width: 360px;
-  margin: 32px auto 0;
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 120px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  margin-top: 12px;
 }
-.qr-section h3 { font-weight: 700; margin-bottom: 4px; }
-.qr-section p { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
-.qr-img { width: 200px; height: 200px; border-radius: 8px; border: 1px solid var(--border); }
-.qr-url { font-size: 11px; color: var(--text-muted); word-break: break-all; margin-top: 8px; }
+.notulen-list-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: box-shadow .2s;
+}
+.notulen-list-item:hover { box-shadow: var(--shadow-lg); }
+.notulen-list-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.notulen-list-kegiatan { font-weight: 700; font-size: 14.5px; }
+.notulen-list-date { font-size: 12px; color: var(--text-muted); }
+.notulen-list-preview { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 </style>
 </head>
 <body data-auth-required="1">
 <div class="app-layout">
-  <!-- Sidebar -->
   <div class="sidebar-overlay"></div>
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="sidebar-brand-icon">🕌</div>
-      <div class="sidebar-brand-text">
-        <div class="org">YASSA</div>
-        <div class="sub">Sistem Digital</div>
-      </div>
+      <div class="sidebar-brand-text"><div class="org">YASSA</div><div class="sub">Sistem Digital</div></div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-label">Menu Utama</div>
@@ -84,156 +98,411 @@
       <a class="nav-item" href="?page=kegiatan"><i>📅</i> Kegiatan</a>
       <a class="nav-item" href="?page=notulen"><i>📝</i> Notulen</a>
       <a class="nav-item" href="?page=arsip"><i>🗂️</i> Arsip</a>
-
+      
       <div class="nav-section-label">Akses Cepat</div>
       <!-- [SESUDAH] Link absolut ini memastikan browser langsung menuju web app asli Anda -->
-      <a class="nav-item" href="https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" target="_blank"><i>✅</i> Form Kehadiran</a>
-
+      <a class="nav-item" href="https://yayasansalamsatuaspaldc-eng.github.io/Notulena-Absensi/Absensi.html" target="_blank"><i>✅</i> Form Absensi</a>
+      
       <!-- TOMBOL LOGOUT MANUAL -->
       <a class="nav-item" href="javascript:void(0)" onclick="yassaLogoutSession(); logoutUtama()" style="color: #ef4444; margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 15px;">
         <i>🚪</i> Keluar (Logout)
       </a>
     </nav>
     <div class="sidebar-footer">
-      <div class="sidebar-avatar">👤</div>
-      <div class="sidebar-user-info">
-        <div class="name">Admin YASSA</div>
-        <div class="role">Administrator</div>
-      </div>
+      <div class="sidebar-avatar">✍️</div>
+      <div class="sidebar-user-info"><div class="name">Sekretaris</div><div class="role">Input Notulen</div></div>
     </div>
   </aside>
 
-  <!-- Main -->
   <div class="main-content">
     <div class="topbar">
       <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-      <div class="topbar-title">Beranda</div>
-      <button class="topbar-btn" id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+      <div class="topbar-title">Notulen Rapat</div>
+      <button class="topbar-btn" id="darkModeBtn" onclick="toggleDarkMode()">🌙</button>
     </div>
 
     <div class="page-content">
-      <div class="hero">
-        <div class="hero-badge">✨ Sistem Manajemen Digital</div>
-        <h1>Selamat Datang di<br>YASSA Digital</h1>
-        <p>Platform manajemen kegiatan, kehadiran QR Code, notulen, dan arsip digital terintegrasi.</p>
-      </div>
+      <div class="row">
+        <!-- Input Panel (SUPERADMIN/ADMIN aja yang boleh input notulen) -->
+        <div class="col-6 yassa-admin-only">
+          <div class="card">
+            <div class="card-header">
+              <span>📝</span>
+              <div class="card-title">Input Notulen</div>
+            </div>
+            <div class="card-body">
+              <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchTab('manual')">✏️ Manual</button>
+                <button class="tab-btn" onclick="switchTab('paste')">📋 Paste Dokumen</button>
+                <button class="tab-btn" onclick="switchTab('ocr')">📷 OCR Foto</button>
+              </div>
 
-      <div class="portal-grid">
-        <a class="portal-card" href="?page=dashboard">
-          <div class="portal-card-icon" style="background:#eff6ff">📊</div>
-          <h3>Dashboard</h3>
-          <p>Statistik & ringkasan data kegiatan organisasi</p>
-        </a>
-        <a class="portal-card" href="?page=kegiatan">
-          <div class="portal-card-icon" style="background:#f0fdf4">📅</div>
-          <h3>Kegiatan</h3>
-          <p>Kelola jadwal dan status kegiatan YASSA</p>
-        </a>
-        <a class="portal-card" href="?page=absensi" target="_blank">
-          <div class="portal-card-icon" style="background:#fef3c7">✅</div>
-          <h3>Kehadiran</h3>
-          <p>Form kehadiran digital via QR Code permanen</p>
-        </a>
-        <a class="portal-card" href="?page=notulen">
-          <div class="portal-card-icon" style="background:#fdf4ff">📝</div>
-          <h3>Notulen</h3>
-          <p>Input & kelola notulen rapat sekretaris</p>
-        </a>
-        <a class="portal-card" href="?page=arsip">
-          <div class="portal-card-icon" style="background:#fff7ed">🗂️</div>
-          <h3>Arsip</h3>
-          <p>Pencarian & ekspor laporan PDF kegiatan</p>
-        </a>
-        <div class="portal-card yassa-admin-only" onclick="openModal('modalSetup')">
-          <div class="portal-card-icon" style="background:#f1f5f9">⚙️</div>
-          <h3>Setup Sistem</h3>
-          <p>Inisialisasi database & folder Drive pertama kali</p>
-        </div>
-      </div>
+              <!-- Tab: Manual -->
+              <div class="tab-content active" id="tab-manual">
+                <div class="form-group">
+                  <label class="form-label">Kegiatan *</label>
+                  <select id="selectKegiatanNotulen" class="form-control">
+                    <option value="">-- Pilih Kegiatan --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Dibuat Oleh</label>
+                  <input type="text" id="inputDibuatOleh" class="form-control" placeholder="Nama sekretaris / pencatat" value="Pencatat">
+                </div>
+                <div class="format-section">
+                  <strong>Format Notulen:</strong> 1. Pembukaan · 2. Agenda · 3. Hasil Diskusi · 4. Keputusan · 5. Tindak Lanjut · 6. Penutup
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Isi Notulen *</label>
+                  <textarea id="inputNotulen" class="form-control notulen-editor"
+                    placeholder="1. PEMBUKAAN&#10;Rapat dibuka oleh...&#10;&#10;2. AGENDA PEMBAHASAN&#10;- ...&#10;&#10;3. HASIL DISKUSI&#10;...&#10;&#10;4. KEPUTUSAN&#10;...&#10;&#10;5. TINDAK LANJUT&#10;...&#10;&#10;6. PENUTUP&#10;Rapat ditutup pukul..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="saveNotulen()" style="width:100%">💾 Simpan Notulen</button>
+              </div>
 
-      <!-- QR Code Section -->
-      <div class="qr-section">
-        <h3>🔲 QR Code Kehadiran</h3>
-        <p>QR Code permanen — scan untuk kehadiran kegiatan aktif</p>
-        <div id="qrContainer">
-          <div style="padding:30px;color:#94a3b8;font-size:13px">Memuat QR Code...</div>
+              <!-- Tab: Paste -->
+              <div class="tab-content" id="tab-paste">
+                <p class="text-muted mb-3" style="font-size:13px">Salin dan tempelkan isi notulen dari Word, Google Docs, atau dokumen lainnya.</p>
+                <div class="form-group">
+                  <label class="form-label">Kegiatan *</label>
+                  <select id="selectKegiatanPaste" class="form-control">
+                    <option value="">-- Pilih Kegiatan --</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Paste Dokumen di Sini</label>
+                  <textarea id="inputPaste" class="form-control notulen-editor"
+                    placeholder="Tempelkan isi dokumen notulen di sini..."></textarea>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline" onclick="transferPaste()" style="flex:1">📤 Transfer ke Editor</button>
+                  <button class="btn btn-primary" onclick="savePaste()" style="flex:1">💾 Simpan</button>
+                </div>
+              </div>
+
+              <!-- Tab: OCR -->
+              <div class="tab-content" id="tab-ocr">
+                <p class="text-muted mb-3" style="font-size:13px">Upload foto tulisan tangan atau screenshot. Sistem akan membaca teks otomatis menggunakan OCR Google Drive.</p>
+                <div class="form-group">
+                  <label class="form-label">Kegiatan *</label>
+                  <select id="selectKegiatanOcr" class="form-control">
+                    <option value="">-- Pilih Kegiatan --</option>
+                  </select>
+                </div>
+                <div class="ocr-upload-area" id="ocrDropZone" onclick="document.getElementById('ocrFileInput').click()">
+                  <div style="font-size:40px;margin-bottom:10px">📷</div>
+                  <div style="font-weight:700;font-size:14px">Klik atau seret foto ke sini</div>
+                  <div style="font-size:12px;color:#94a3b8;margin-top:4px">Format: JPG, PNG, WEBP (maks 5MB)</div>
+                </div>
+                <input type="file" id="ocrFileInput" accept="image/*" style="display:none" onchange="handleOcrFile(event)">
+
+                <div id="ocrPreview" style="display:none;margin-top:12px">
+                  <img id="ocrPreviewImg" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border)" />
+                </div>
+
+                <div id="ocrResultArea" style="display:none">
+                  <label class="form-label mt-4">Hasil OCR (dapat diedit sebelum disimpan)</label>
+                  <textarea id="ocrResult" class="form-control" style="min-height:180px"></textarea>
+                  <button class="btn btn-primary mt-4" onclick="saveOcr()" style="width:100%">💾 Simpan Notulen dari OCR</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="qr-url" id="qrUrl"></div>
-        <button class="btn btn-outline" style="margin-top:12px;font-size:12px" onclick="downloadQR()">⬇ Download QR Code</button>
+
+        <!-- List Panel -->
+        <div class="col-6">
+          <div class="card">
+            <div class="card-header">
+              <span>📚</span>
+              <div class="card-title">Riwayat Notulen</div>
+              <div class="card-actions">
+                <button class="btn btn-outline btn-sm" onclick="loadNotulen()">↻</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="topbar-search mb-4" style="width:100%">
+                <span>🔍</span>
+                <input type="text" id="searchNotulen" placeholder="Cari notulen..." oninput="filterNotulen()">
+              </div>
+              <div id="notulenList">
+                <div class="text-center text-muted" style="padding:30px">Memuat notulen...</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal Setup -->
-<div class="modal-overlay" id="modalSetup">
-  <div class="modal">
+<!-- Modal Lihat Notulen -->
+<div class="modal-overlay" id="modalViewNotulen">
+  <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <span>⚙️</span>
-      <div class="modal-title">Setup Sistem YASSA</div>
-      <button class="modal-close" onclick="closeModal('modalSetup')">✕</button>
+      <span>📄</span>
+      <div class="modal-title" id="viewNotulenTitle">Detail Notulen</div>
+      <button class="modal-close" onclick="closeModal('modalViewNotulen')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="color:#64748b;font-size:13.5px;line-height:1.6">
-        Setup akan membuat struktur sheet di Google Spreadsheet dan folder di Google Drive secara otomatis.
-        Jalankan sekali saat pertama kali menggunakan sistem.<br><br>
-        <strong>Spreadsheet ID:</strong><br>
-        <code style="font-size:11px;background:#f1f5f9;padding:3px 6px;border-radius:4px">13JLhgKahJubgqgvkTUDGP6xLDTKRw3r6i898JbK-Ck8</code>
-      </p>
+      <pre id="viewNotulenContent" style="white-space:pre-wrap;font-family:inherit;font-size:13.5px;line-height:1.7"></pre>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modalSetup')">Batal</button>
-      <button class="btn btn-primary" onclick="runSetup()">🚀 Jalankan Setup</button>
+      <button class="btn btn-outline" onclick="closeModal('modalViewNotulen')">Tutup</button>
     </div>
   </div>
 </div>
 
 <script src="script.js"></script>
 <script>
-function loadQR() {
+let allNotulen = [];
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    const names = ['manual','paste','ocr'];
+    btn.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function loadKegiatan() {
+  google.script.run
+    .withSuccessHandler(function(list) {
+      ['selectKegiatanNotulen','selectKegiatanPaste','selectKegiatanOcr'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">-- Pilih Kegiatan --</option>';
+        if (Array.isArray(list)) {
+          list.forEach(k => {
+            const opt = document.createElement('option');
+            opt.value = k.nama;
+            opt.textContent = k.nama + (k.status === 'Aktif' ? ' 🟢' : ' (Selesai)');
+            sel.appendChild(opt);
+          });
+        }
+      });
+    })
+    .withFailureHandler(function(err) {
+      showToast('Gagal memuat daftar kegiatan: ' + (err.message || ''), 'error');
+    })
+    .getKegiatan();
+}
+
+function loadNotulen() {
   google.script.run
     .withSuccessHandler(function(data) {
-      const container = document.getElementById('qrContainer');
-      container.innerHTML = `<img class="qr-img" src="${data.qrUrl}" alt="QR Code Kehadiran" id="qrImage" />`;
-      document.getElementById('qrUrl').textContent = data.absensiUrl;
+      allNotulen = data || [];
+      renderNotulen(allNotulen);
     })
-    .getQRCodeUrl();
+    .withFailureHandler(function(err) {
+      const container = document.getElementById('notulenList');
+      if (container) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h4>Gagal memuat notulen</h4><p>${escapeHtml(err.message || 'Koneksi bermasalah')}</p></div>`;
+      }
+    })
+    .getNotulen();
 }
 
-function downloadQR() {
-  const img = document.getElementById('qrImage');
-  if (!img) return;
-  const a = document.createElement('a');
-  a.href = img.src;
-  a.download = 'QRCode_Kehadiran_YASSA.png';
-  a.click();
+function renderNotulen(list) {
+  const container = document.getElementById('notulenList');
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📄</div><h4>Belum ada notulen</h4><p>Tambah notulen pertama Anda.</p></div>`;
+    return;
+  }
+  container.innerHTML = list.map((n, i) => `
+    <div class="notulen-list-item">
+      <div class="notulen-list-header">
+        <span style="font-size:20px">📄</span>
+        <div style="flex:1">
+          <div class="notulen-list-kegiatan">${escapeHtml(n.kegiatan)}</div>
+          <div class="notulen-list-date">📅 ${escapeHtml(n.tanggal)} · ✍️ ${escapeHtml(n.dibuatOleh)}</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="viewNotulen(${i})">👁 Lihat</button>
+      </div>
+      <div class="notulen-list-preview">${escapeHtml((n.notulen || '').slice(0, 120))}${(n.notulen||'').length > 120 ? '...' : ''}</div>
+    </div>
+  `).join('');
 }
 
-function runSetup() {
-  showLoading('Menginisialisasi sistem...');
+function filterNotulen() {
+  const s = document.getElementById('searchNotulen').value.toLowerCase();
+  renderNotulen(allNotulen.filter(n =>
+    n.kegiatan.toLowerCase().includes(s) ||
+    (n.notulen||'').toLowerCase().includes(s) ||
+    (n.dibuatOleh||'').toLowerCase().includes(s)
+  ));
+}
+
+function viewNotulen(idx) {
+  const n = allNotulen[idx];
+  if (!n) return;
+  document.getElementById('viewNotulenTitle').textContent = n.kegiatan;
+  document.getElementById('viewNotulenContent').textContent = n.notulen || '(kosong)';
+  openModal('modalViewNotulen');
+}
+
+function saveNotulen() {
+  const kegiatan = document.getElementById('selectKegiatanNotulen').value;
+  const notulen = document.getElementById('inputNotulen').value.trim();
+  const dibuatOleh = document.getElementById('inputDibuatOleh').value.trim();
+  if (!kegiatan) { showToast('Pilih kegiatan terlebih dahulu!', 'error'); return; }
+  if (!notulen) { showToast('Isi notulen tidak boleh kosong!', 'error'); return; }
+  _doSaveNotulen(kegiatan, notulen, dibuatOleh);
+}
+
+function savePaste() {
+  const kegiatan = document.getElementById('selectKegiatanPaste').value;
+  const notulen = document.getElementById('inputPaste').value.trim();
+  if (!kegiatan) { showToast('Pilih kegiatan!', 'error'); return; }
+  if (!notulen) { showToast('Isi notulen kosong!', 'error'); return; }
+  _doSaveNotulen(kegiatan, notulen, 'Sekretaris');
+}
+
+function transferPaste() {
+  const kegiatan = document.getElementById('selectKegiatanPaste').value;
+  const notulen = document.getElementById('inputPaste').value.trim();
+  switchTab('manual');
+  document.getElementById('selectKegiatanNotulen').value = kegiatan;
+  document.getElementById('inputNotulen').value = notulen;
+  showToast('Teks dipindahkan ke editor manual.', 'info');
+}
+
+function saveOcr() {
+  const kegiatan = document.getElementById('selectKegiatanOcr').value;
+  const notulen = document.getElementById('ocrResult').value.trim();
+  if (!kegiatan) { showToast('Pilih kegiatan!', 'error'); return; }
+  if (!notulen) { showToast('Isi OCR kosong!', 'error'); return; }
+  _doSaveNotulen(kegiatan, notulen, 'OCR - Sekretaris');
+}
+
+function _doSaveNotulen(kegiatan, notulen, dibuatOleh) {
+  showLoading('Menyimpan notulen...');
   google.script.run
     .withSuccessHandler(function(res) {
       hideLoading();
-      closeModal('modalSetup');
-      showToast(res.message || 'Setup selesai!', 'success');
+      if (res.success) {
+        showToast(res.message, 'success');
+        loadNotulen();
+        document.getElementById('inputNotulen').value = '';
+        document.getElementById('inputPaste').value = '';
+        document.getElementById('ocrResult').value = '';
+      } else {
+        showToast(res.message || 'Gagal menyimpan', 'error');
+      }
     })
-    .withFailureHandler(function(err) {
-      hideLoading();
-      showToast('Setup gagal: ' + err.message, 'error');
-    })
-    .setupSystem();
+    .withFailureHandler(function(err) { hideLoading(); showToast('Error: ' + err.message, 'error'); })
+    .saveNotulen({ kegiatan, notulen, dibuatOleh: dibuatOleh || 'Sekretaris' });
 }
 
-document.addEventListener('DOMContentLoaded', loadQR);
+// OCR
+function handleOcrFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  // Hapus batasan 5MB karena sistem sudah bisa mengompres otomatis
+  showLoading('Mengompres gambar...');
+
+  // Lempar file asli ke fungsi kompresi
+  compressImage(file, function(compressedDataUrl) {
+    
+    // Tampilkan preview menggunakan hasil kompresi agar lebih ringan diload
+    document.getElementById('ocrPreviewImg').src = compressedDataUrl;
+    document.getElementById('ocrPreview').style.display = 'block';
+    
+    // Pisahkan header base64 dan ambil isi datanya
+    const base64 = compressedDataUrl.split(',')[1];
+    const mime = 'image/jpeg'; // Karena di compressImage kita set 'image/jpeg'
+
+    // Update pesan loading
+    hideLoading(); // Sembunyikan loading kompresi
+    showLoading('Memproses OCR dengan AI...'); // Tampilkan loading AI
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        hideLoading();
+        if (res.success && res.text) {
+          document.getElementById('ocrResult').value = res.text;
+          document.getElementById('ocrResultArea').style.display = 'block';
+          showToast('OCR AI berhasil! Periksa dan edit hasilnya.', 'success');
+        } else {
+          showToast(res.message || 'OCR gagal. Coba gambar yang lebih jelas.', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        hideLoading();
+        showToast('OCR error: ' + err.message, 'error');
+      })
+      .performOCR(base64, mime);
+  });
+}
+
+// Drag & Drop OCR
+const dropZone = document.getElementById('ocrDropZone');
+if (dropZone) {
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('ocrFileInput').files = dt.files;
+      handleOcrFile({ target: document.getElementById('ocrFileInput') });
+    }
+  });
+}
+
+// ============================================================
+// FUNGSI KOMPRESI GAMBAR (FRONTEND)
+// ============================================================
+function compressImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Batas maksimal resolusi 1200px agar aman dikirim ke GAS
+      const MAX_WIDTH = 1200;
+      let width = img.width;
+      let height = img.height;
+      
+      if (width > MAX_WIDTH) {
+        height = Math.round((height * MAX_WIDTH) / width);
+        width = MAX_WIDTH;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Kompres ke JPEG dengan kualitas 70%
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      callback(dataUrl);
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadKegiatan();
+  loadNotulen();
+});
 
 // ============================================================
 // SISTEM LOGOUT & IDLE TIMER (GLOBAL)
 // ============================================================
-const WAKTU_IDLE_MENIT = 5;          // Batas diam sebelum logout otomatis (menit)
-const WAKTU_MAKSIMAL_MENIT = 600;    // Batas maksimum sesi login (600 menit / 10 jam)
+
+const WAKTU_IDLE_MENIT = 5;
+const WAKTU_MAKSIMAL_MENIT = 600; // Batas maksimum sesi login (600 menit / 10 jam)
 let idleTimer;
 
-// Paksa logout otomatis setelah WAKTU_MAKSIMAL_MENIT tanpa toleransi aktivitas
+// Paksa logout otomatis setelah 600 menit tanpa toleransi aktivitas
 setTimeout(logoutUtama, WAKTU_MAKSIMAL_MENIT * 60 * 1000);
 
 function resetIdleTimer() {
@@ -246,18 +515,18 @@ function logoutUtama() {
     if (typeof showLoading === "function") {
       showLoading('Keluar dari sistem...');
     }
-
+    
     // 1. Sapu bersih seluruh data sesi dan memori browser seketika
     localStorage.clear();
     sessionStorage.clear();
-
+    
     // 2. Siapkan parameter anti-cache
     const cacheBuster = new Date().getTime();
     // Mengubah alamat tujuan logout menuju ke halaman utama portal blog Anda yang bersih
     const logoutUrl = 'https://yayasansalamsatuaspal.blogspot.com/p/portal-absensi-yassa.html?page=absensi&v=' + cacheBuster;
-    // 3. Lakukan pengalihan paksa
+    // 4. Lakukan pengalihan paksa
     window.location.replace(logoutUrl);
-
+      
   } catch (error) {
     console.error("Logout error: ", error);
     // Jalur penyelamat darurat dialihkan kembali ke halaman utama portal blog Anda yang bersih
@@ -265,13 +534,14 @@ function logoutUtama() {
   }
 }
 
-// Sensor aktivitas dipusatkan di sini menggunakan Event Listener
+// Sensor aktivitas dipusatkan di sini menggunakan Event Listener yang lebih aman
 window.addEventListener('load', resetIdleTimer);
 document.addEventListener('mousemove', resetIdleTimer);
 document.addEventListener('keypress', resetIdleTimer);
 document.addEventListener('touchstart', resetIdleTimer);
 document.addEventListener('click', resetIdleTimer);
 document.addEventListener('scroll', resetIdleTimer);
+
 </script>
 </body>
 </html>
